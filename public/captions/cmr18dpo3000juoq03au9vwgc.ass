@@ -1,0 +1,76 @@
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 720
+PlayResY: 1280
+WrapStyle: 2
+ScaledBorderAndShadow: yes
+YCbCr Matrix: TV.709
+
+[V4+ Styles]
+Format: Name,Fontname,Fontsize,PrimaryColour,SecondaryColour,OutlineColour,BackColour,Bold,Italic,Underline,StrikeOut,ScaleX,ScaleY,Spacing,Angle,BorderStyle,Outline,Shadow,Alignment,MarginL,MarginR,MarginV,Encoding
+
+Style: Normal,Bebas Neue,68,&H00FFFFFF,&H0000FFFF,&H00000000,&H78000000,1,0,0,0,100,100,0,0,1,4,1,2,70,70,140,1
+
+Style: Highlight,Bebas Neue,68,&H0000FFFF,&H0000FFFF,&H00000000,&H78000000,1,0,0,0,100,100,0,0,1,4,1,2,70,70,140,1
+
+[Events]
+Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
+Dialogue: 0,0:00:00.00,0:00:00.38,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,133,\fscx130\fscy130)}{\t(133,266,\fscx100\fscy100)}{\t(0,380,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}HOOK.
+Dialogue: 0,0:00:01.06,0:00:01.58,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,182,\fscx130\fscy130)}{\t(182,364,\fscx100\fscy100)}{\t(0,520,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}DID
+Dialogue: 0,0:00:01.58,0:00:01.74,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,55,\fscx130\fscy130)}{\t(55,111,\fscx100\fscy100)}{\t(0,159,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}YOU
+Dialogue: 0,0:00:01.74,0:00:01.88,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,48,\fscx130\fscy130)}{\t(48,97,\fscx100\fscy100)}{\t(0,139,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}KNOW
+Dialogue: 0,0:00:01.88,0:00:02.06,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,62,\fscx130\fscy130)}{\t(62,125,\fscx100\fscy100)}{\t(0,180,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}THAT
+Dialogue: 0,0:00:02.06,0:00:02.28,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,76,\fscx130\fscy130)}{\t(76,153,\fscx100\fscy100)}{\t(0,219,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}BEST
+Dialogue: 0,0:00:02.28,0:00:02.66,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,133,\fscx130\fscy130)}{\t(133,266,\fscx100\fscy100)}{\t(0,380,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}PLACES
+Dialogue: 0,0:00:02.66,0:00:02.88,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,76,\fscx130\fscy130)}{\t(76,153,\fscx100\fscy100)}{\t(0,219,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}TO
+Dialogue: 0,0:00:02.88,0:00:03.16,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,98,\fscx130\fscy130)}{\t(98,196,\fscx100\fscy100)}{\t(0,280,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}VISIT
+Dialogue: 0,0:00:03.16,0:00:03.38,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,76,\fscx130\fscy130)}{\t(76,153,\fscx100\fscy100)}{\t(0,219,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}IN
+Dialogue: 0,0:00:03.38,0:00:03.60,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,77,\fscx130\fscy130)}{\t(77,154,\fscx100\fscy100)}{\t(0,220,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}USA
+Dialogue: 0,0:00:03.60,0:00:04.04,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,153,\fscx130\fscy130)}{\t(153,307,\fscx100\fscy100)}{\t(0,439,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}TODAY?
+Dialogue: 0,0:00:05.22,0:00:05.38,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,56,\fscx130\fscy130)}{\t(56,112,\fscx100\fscy100)}{\t(0,160,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}MAIN
+Dialogue: 0,0:00:05.38,0:00:05.92,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,189,\fscx130\fscy130)}{\t(189,378,\fscx100\fscy100)}{\t(0,540,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}CONTENT.
+Dialogue: 0,0:00:06.74,0:00:07.34,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,209,\fscx130\fscy130)}{\t(209,419,\fscx100\fscy100)}{\t(0,599,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}TODAY
+Dialogue: 0,0:00:07.34,0:00:07.62,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,98,\fscx130\fscy130)}{\t(98,196,\fscx100\fscy100)}{\t(0,280,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}WE'RE
+Dialogue: 0,0:00:07.62,0:00:08.02,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,139,\fscx130\fscy130)}{\t(139,279,\fscx100\fscy100)}{\t(0,399,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}EXPLORING
+Dialogue: 0,0:00:08.02,0:00:08.26,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,84,\fscx130\fscy130)}{\t(84,168,\fscx100\fscy100)}{\t(0,240,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}BEST
+Dialogue: 0,0:00:08.26,0:00:08.72,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,161,\fscx130\fscy130)}{\t(161,322,\fscx100\fscy100)}{\t(0,460,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}PLACES
+Dialogue: 0,0:00:08.72,0:00:08.90,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,62,\fscx130\fscy130)}{\t(62,125,\fscx100\fscy100)}{\t(0,179,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}TO
+Dialogue: 0,0:00:08.90,0:00:09.18,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,97,\fscx130\fscy130)}{\t(97,195,\fscx100\fscy100)}{\t(0,279,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}VISIT
+Dialogue: 0,0:00:09.18,0:00:09.40,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,77,\fscx130\fscy130)}{\t(77,154,\fscx100\fscy100)}{\t(0,220,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}IN
+Dialogue: 0,0:00:09.40,0:00:09.68,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,97,\fscx130\fscy130)}{\t(97,195,\fscx100\fscy100)}{\t(0,279,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}USA
+Dialogue: 0,0:00:09.68,0:00:10.16,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,168,\fscx130\fscy130)}{\t(168,336,\fscx100\fscy100)}{\t(0,480,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}TODAY.
+Dialogue: 0,0:00:11.16,0:00:11.44,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,97,\fscx130\fscy130)}{\t(97,195,\fscx100\fscy100)}{\t(0,279,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}THIS
+Dialogue: 0,0:00:11.44,0:00:11.76,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,112,\fscx130\fscy130)}{\t(112,224,\fscx100\fscy100)}{\t(0,320,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}TOPIC
+Dialogue: 0,0:00:11.76,0:00:11.98,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,77,\fscx130\fscy130)}{\t(77,154,\fscx100\fscy100)}{\t(0,220,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}IS
+Dialogue: 0,0:00:11.98,0:00:12.28,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,104,\fscx130\fscy130)}{\t(104,209,\fscx100\fscy100)}{\t(0,299,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}BECOMING
+Dialogue: 0,0:00:12.28,0:00:12.98,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,244,\fscx130\fscy130)}{\t(244,489,\fscx100\fscy100)}{\t(0,700,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}INCREASINGLY
+Dialogue: 0,0:00:12.98,0:00:13.48,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,175,\fscx130\fscy130)}{\t(175,350,\fscx100\fscy100)}{\t(0,500,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}IMPORTANT
+Dialogue: 0,0:00:13.48,0:00:13.70,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,76,\fscx130\fscy130)}{\t(76,153,\fscx100\fscy100)}{\t(0,219,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}IN
+Dialogue: 0,0:00:13.70,0:00:13.80,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,35,\fscx130\fscy130)}{\t(35,70,\fscx100\fscy100)}{\t(0,100,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}THE
+Dialogue: 0,0:00:13.80,0:00:14.12,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,111,\fscx130\fscy130)}{\t(111,223,\fscx100\fscy100)}{\t(0,319,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}YOUTUBE
+Dialogue: 0,0:00:14.12,0:00:14.46,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,118,\fscx130\fscy130)}{\t(118,237,\fscx100\fscy100)}{\t(0,340,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}SHORT
+Dialogue: 0,0:00:14.46,0:00:14.90,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,153,\fscx130\fscy130)}{\t(153,307,\fscx100\fscy100)}{\t(0,439,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}SPACE.
+Dialogue: 0,0:00:15.90,0:00:16.26,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,125,\fscx130\fscy130)}{\t(125,251,\fscx100\fscy100)}{\t(0,360,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}MANY
+Dialogue: 0,0:00:16.26,0:00:16.66,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,139,\fscx130\fscy130)}{\t(139,279,\fscx100\fscy100)}{\t(0,399,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}EXPERTS
+Dialogue: 0,0:00:16.66,0:00:17.10,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,154,\fscx130\fscy130)}{\t(154,308,\fscx100\fscy100)}{\t(0,440,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}BELIEVE
+Dialogue: 0,0:00:17.10,0:00:17.28,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,62,\fscx130\fscy130)}{\t(62,125,\fscx100\fscy100)}{\t(0,179,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}THAT
+Dialogue: 0,0:00:17.28,0:00:17.44,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,56,\fscx130\fscy130)}{\t(56,112,\fscx100\fscy100)}{\t(0,160,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}WE'LL
+Dialogue: 0,0:00:17.44,0:00:17.58,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,48,\fscx130\fscy130)}{\t(48,97,\fscx100\fscy100)}{\t(0,139,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}HAVE
+Dialogue: 0,0:00:17.58,0:00:17.72,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,49,\fscx130\fscy130)}{\t(49,98,\fscx100\fscy100)}{\t(0,140,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}A
+Dialogue: 0,0:00:17.72,0:00:18.22,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,175,\fscx130\fscy130)}{\t(175,350,\fscx100\fscy100)}{\t(0,500,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}SIGNIFICANT
+Dialogue: 0,0:00:18.22,0:00:18.72,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,175,\fscx130\fscy130)}{\t(175,350,\fscx100\fscy100)}{\t(0,500,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}IMPACT
+Dialogue: 0,0:00:18.72,0:00:18.98,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,91,\fscx130\fscy130)}{\t(91,182,\fscx100\fscy100)}{\t(0,260,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}IN
+Dialogue: 0,0:00:18.98,0:00:19.08,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,34,\fscx130\fscy130)}{\t(34,69,\fscx100\fscy100)}{\t(0,99,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}THE
+Dialogue: 0,0:00:19.08,0:00:19.32,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,84,\fscx130\fscy130)}{\t(84,168,\fscx100\fscy100)}{\t(0,240,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}COMING
+Dialogue: 0,0:00:19.32,0:00:19.74,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,146,\fscx130\fscy130)}{\t(146,293,\fscx100\fscy100)}{\t(0,419,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}YEARS.
+Dialogue: 0,0:00:20.70,0:00:20.98,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,98,\fscx130\fscy130)}{\t(98,196,\fscx100\fscy100)}{\t(0,280,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}CALL
+Dialogue: 0,0:00:20.98,0:00:21.22,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,83,\fscx130\fscy130)}{\t(83,167,\fscx100\fscy100)}{\t(0,239,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}TO
+Dialogue: 0,0:00:21.22,0:00:21.64,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,147,\fscx130\fscy130)}{\t(147,294,\fscx100\fscy100)}{\t(0,420,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}ACTION.
+Dialogue: 0,0:00:22.30,0:00:22.94,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,224,\fscx130\fscy130)}{\t(224,448,\fscx100\fscy100)}{\t(0,640,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}FOLLOW
+Dialogue: 0,0:00:22.94,0:00:23.16,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,76,\fscx130\fscy130)}{\t(76,153,\fscx100\fscy100)}{\t(0,219,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}FOR
+Dialogue: 0,0:00:23.16,0:00:23.38,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,76,\fscx130\fscy130)}{\t(76,153,\fscx100\fscy100)}{\t(0,219,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}MORE
+Dialogue: 0,0:00:23.38,0:00:23.62,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,84,\fscx130\fscy130)}{\t(84,168,\fscx100\fscy100)}{\t(0,240,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}AI
+Dialogue: 0,0:00:23.62,0:00:24.22,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,209,\fscx130\fscy130)}{\t(209,419,\fscx100\fscy100)}{\t(0,599,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}-GENERATED
+Dialogue: 0,0:00:24.22,0:00:24.66,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,154,\fscx130\fscy130)}{\t(154,308,\fscx100\fscy100)}{\t(0,440,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}CONTENT
+Dialogue: 0,0:00:24.66,0:00:24.92,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,91,\fscx130\fscy130)}{\t(91,182,\fscx100\fscy100)}{\t(0,260,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}AND
+Dialogue: 0,0:00:24.92,0:00:25.26,Default,,0,0,0,,{\an2}{\shad3}{\bord4}{\blur1}{\fad(80,80)}{\fscx60\fscy60}{\t(0,118,\fscx130\fscy130)}{\t(118,237,\fscx100\fscy100)}{\t(0,339,\bord6\blur2)}{\t(0,120,\frz2)}{\t(120,240,\frz0)}{\1c&H00FFFF&}INSIGHTS.

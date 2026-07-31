@@ -1,0 +1,74 @@
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 720
+PlayResY: 1280
+WrapStyle: 2
+ScaledBorderAndShadow: yes
+YCbCr Matrix: TV.709
+
+[V4+ Styles]
+Format: Name,Fontname,Fontsize,PrimaryColour,SecondaryColour,OutlineColour,BackColour,Bold,Italic,Underline,StrikeOut,ScaleX,ScaleY,Spacing,Angle,BorderStyle,Outline,Shadow,Alignment,MarginL,MarginR,MarginV,Encoding
+
+Style: Normal,Bebas Neue,68,&H00FFFFFF,&H0000FFFF,&H00000000,&H78000000,1,0,0,0,100,100,0,0,1,4,1,2,70,70,140,1
+
+Style: Highlight,Bebas Neue,68,&H0000FFFF,&H0000FFFF,&H00000000,&H78000000,1,0,0,0,100,100,0,0,1,4,1,2,70,70,140,1
+
+[Events]
+Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
+Dialogue: 0,0:00:00.00,0:00:01.62,Normal,,0,0,0,,HOOK.
+Dialogue: 0,0:00:01.12,0:00:02.92,Normal,,0,0,0,,DID
+Dialogue: 0,0:00:01.72,0:00:03.08,Normal,,0,0,0,,YOU
+Dialogue: 0,0:00:01.88,0:00:03.26,Normal,,0,0,0,,KNOW
+Dialogue: 0,0:00:02.06,0:00:03.42,Normal,,0,0,0,,THAT
+Dialogue: 0,0:00:02.22,0:00:03.70,Normal,,0,0,0,,BEST
+Dialogue: 0,0:00:02.50,0:00:04.32,Normal,,0,0,0,,FOOTBALLERS
+Dialogue: 0,0:00:03.12,0:00:04.44,Normal,,0,0,0,,OF
+Dialogue: 0,0:00:03.24,0:00:05.26,Normal,,0,0,0,,2026
+Dialogue: 0,0:00:04.06,0:00:05.62,Normal,,0,0,0,,WORLD
+Dialogue: 0,0:00:04.42,0:00:05.84,Normal,,0,0,0,,CUP?
+Dialogue: 0,0:00:05.84,0:00:07.20,Normal,,0,0,0,,MAIN
+Dialogue: 0,0:00:06.00,0:00:07.74,Normal,,0,0,0,,CONTENT.
+Dialogue: 0,0:00:07.26,0:00:09.18,Normal,,0,0,0,,TODAY
+Dialogue: 0,0:00:07.98,0:00:09.46,Normal,,0,0,0,,WE'RE
+Dialogue: 0,0:00:08.26,0:00:09.90,Normal,,0,0,0,,EXPLORING
+Dialogue: 0,0:00:08.70,0:00:10.16,Normal,,0,0,0,,BEST
+Dialogue: 0,0:00:08.96,0:00:10.88,Normal,,0,0,0,,FOOTBALLERS
+Dialogue: 0,0:00:09.68,0:00:10.98,Normal,,0,0,0,,OF
+Dialogue: 0,0:00:09.78,0:00:11.82,Normal,,0,0,0,,2026
+Dialogue: 0,0:00:10.62,0:00:12.20,Normal,,0,0,0,,WORLD
+Dialogue: 0,0:00:11.00,0:00:12.46,Normal,,0,0,0,,CUP.
+Dialogue: 0,0:00:12.26,0:00:13.82,Normal,,0,0,0,,THIS
+Dialogue: 0,0:00:12.62,0:00:14.18,Normal,,0,0,0,,TOPIC
+Dialogue: 0,0:00:12.98,0:00:14.40,Normal,,0,0,0,,IS
+Dialogue: 0,0:00:13.20,0:00:14.76,Normal,,0,0,0,,BECOMING
+Dialogue: 0,0:00:13.56,0:00:15.48,Normal,,0,0,0,,INCREASINGLY
+Dialogue: 0,0:00:14.28,0:00:15.98,Normal,,0,0,0,,IMPORTANT
+Dialogue: 0,0:00:14.78,0:00:16.24,Normal,,0,0,0,,IN
+Dialogue: 0,0:00:15.04,0:00:16.34,Normal,,0,0,0,,THE
+Dialogue: 0,0:00:15.14,0:00:16.64,Normal,,0,0,0,,YOUTUBE
+Dialogue: 0,0:00:15.44,0:00:16.96,Normal,,0,0,0,,SHORT
+Dialogue: 0,0:00:15.76,0:00:17.52,Normal,,0,0,0,,SPACE.
+Dialogue: 0,0:00:17.22,0:00:18.82,Normal,,0,0,0,,MANY
+Dialogue: 0,0:00:17.62,0:00:19.32,Normal,,0,0,0,,EXPERTS
+Dialogue: 0,0:00:18.12,0:00:19.78,Normal,,0,0,0,,BELIEVE
+Dialogue: 0,0:00:18.58,0:00:19.96,Normal,,0,0,0,,IT
+Dialogue: 0,0:00:18.76,0:00:20.08,Normal,,0,0,0,,WILL
+Dialogue: 0,0:00:18.88,0:00:20.26,Normal,,0,0,0,,HAVE
+Dialogue: 0,0:00:19.06,0:00:20.38,Normal,,0,0,0,,A
+Dialogue: 0,0:00:19.18,0:00:20.94,Normal,,0,0,0,,SIGNIFICANT
+Dialogue: 0,0:00:19.74,0:00:21.38,Normal,,0,0,0,,IMPACT
+Dialogue: 0,0:00:20.18,0:00:21.68,Normal,,0,0,0,,IN
+Dialogue: 0,0:00:20.48,0:00:21.78,Normal,,0,0,0,,THE
+Dialogue: 0,0:00:20.58,0:00:22.00,Normal,,0,0,0,,COMING
+Dialogue: 0,0:00:20.80,0:00:22.38,Normal,,0,0,0,,YEARS.
+Dialogue: 0,0:00:22.32,0:00:23.72,Normal,,0,0,0,,CALL
+Dialogue: 0,0:00:22.52,0:00:23.94,Normal,,0,0,0,,TO
+Dialogue: 0,0:00:22.74,0:00:24.36,Normal,,0,0,0,,ACTION.
+Dialogue: 0,0:00:23.80,0:00:25.72,Normal,,0,0,0,,FOLLOW
+Dialogue: 0,0:00:24.52,0:00:25.94,Normal,,0,0,0,,FOR
+Dialogue: 0,0:00:24.74,0:00:26.20,Normal,,0,0,0,,MORE
+Dialogue: 0,0:00:25.00,0:00:26.46,Normal,,0,0,0,,AI
+Dialogue: 0,0:00:25.26,0:00:27.06,Normal,,0,0,0,,-GENERATED
+Dialogue: 0,0:00:25.86,0:00:27.50,Normal,,0,0,0,,CONTENT
+Dialogue: 0,0:00:26.30,0:00:27.76,Normal,,0,0,0,,AND
+Dialogue: 0,0:00:26.56,0:00:28.14,Normal,,0,0,0,,INSIGHTS.

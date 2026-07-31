@@ -1,0 +1,72 @@
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 720
+PlayResY: 1280
+WrapStyle: 2
+ScaledBorderAndShadow: yes
+YCbCr Matrix: TV.709
+
+[V4+ Styles]
+Format: Name,Fontname,Fontsize,PrimaryColour,SecondaryColour,OutlineColour,BackColour,Bold,Italic,Underline,StrikeOut,ScaleX,ScaleY,Spacing,Angle,BorderStyle,Outline,Shadow,Alignment,MarginL,MarginR,MarginV,Encoding
+
+Style: Normal,Bebas Neue,68,&H00FFFFFF,&H0000FFFF,&H00000000,&H78000000,1,0,0,0,100,100,0,0,1,4,1,2,70,70,140,1
+
+Style: Highlight,Bebas Neue,68,&H0000FFFF,&H0000FFFF,&H00000000,&H78000000,1,0,0,0,100,100,0,0,1,4,1,2,70,70,140,1
+
+[Events]
+Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
+Dialogue: 0,0:00:00.00,0:00:01.62,Normal,,0,0,0,,HOOK!
+Dialogue: 0,0:00:01.44,0:00:02.92,Normal,,0,0,0,,DID
+Dialogue: 0,0:00:01.72,0:00:03.10,Normal,,0,0,0,,YOU
+Dialogue: 0,0:00:01.90,0:00:03.28,Normal,,0,0,0,,KNOW
+Dialogue: 0,0:00:02.08,0:00:03.44,Normal,,0,0,0,,THAT
+Dialogue: 0,0:00:02.24,0:00:03.72,Normal,,0,0,0,,TOOLS
+Dialogue: 0,0:00:02.52,0:00:04.10,Normal,,0,0,0,,EVERY
+Dialogue: 0,0:00:02.90,0:00:04.44,Normal,,0,0,0,,DEVELOPER
+Dialogue: 0,0:00:03.24,0:00:04.82,Normal,,0,0,0,,SHOULD
+Dialogue: 0,0:00:03.62,0:00:05.02,Normal,,0,0,0,,KNOW?
+Dialogue: 0,0:00:04.86,0:00:06.34,Normal,,0,0,0,,MAIN
+Dialogue: 0,0:00:05.14,0:00:06.88,Normal,,0,0,0,,CONTENT.
+Dialogue: 0,0:00:06.58,0:00:08.30,Normal,,0,0,0,,TODAY
+Dialogue: 0,0:00:07.10,0:00:08.58,Normal,,0,0,0,,WE'RE
+Dialogue: 0,0:00:07.38,0:00:09.08,Normal,,0,0,0,,EXPLORING
+Dialogue: 0,0:00:07.88,0:00:09.44,Normal,,0,0,0,,TOOLS
+Dialogue: 0,0:00:08.24,0:00:09.84,Normal,,0,0,0,,EVERY
+Dialogue: 0,0:00:08.64,0:00:10.26,Normal,,0,0,0,,DEVELOPER
+Dialogue: 0,0:00:09.06,0:00:10.60,Normal,,0,0,0,,SHOULD
+Dialogue: 0,0:00:09.40,0:00:10.84,Normal,,0,0,0,,KNOW.
+Dialogue: 0,0:00:10.62,0:00:12.14,Normal,,0,0,0,,THIS
+Dialogue: 0,0:00:10.94,0:00:12.50,Normal,,0,0,0,,TOPIC
+Dialogue: 0,0:00:11.30,0:00:12.70,Normal,,0,0,0,,IS
+Dialogue: 0,0:00:11.50,0:00:13.04,Normal,,0,0,0,,BECOMING
+Dialogue: 0,0:00:11.84,0:00:13.72,Normal,,0,0,0,,INCREASINGLY
+Dialogue: 0,0:00:12.52,0:00:14.30,Normal,,0,0,0,,IMPORTANT
+Dialogue: 0,0:00:13.10,0:00:14.56,Normal,,0,0,0,,IN
+Dialogue: 0,0:00:13.36,0:00:14.66,Normal,,0,0,0,,THE
+Dialogue: 0,0:00:13.46,0:00:14.96,Normal,,0,0,0,,YOUTUBE
+Dialogue: 0,0:00:13.76,0:00:15.28,Normal,,0,0,0,,SHORT
+Dialogue: 0,0:00:14.08,0:00:15.84,Normal,,0,0,0,,SPACE.
+Dialogue: 0,0:00:15.52,0:00:17.14,Normal,,0,0,0,,MANY
+Dialogue: 0,0:00:15.94,0:00:17.64,Normal,,0,0,0,,EXPERTS
+Dialogue: 0,0:00:16.44,0:00:18.10,Normal,,0,0,0,,BELIEVE
+Dialogue: 0,0:00:16.90,0:00:18.28,Normal,,0,0,0,,IT
+Dialogue: 0,0:00:17.08,0:00:18.40,Normal,,0,0,0,,WILL
+Dialogue: 0,0:00:17.20,0:00:18.56,Normal,,0,0,0,,HAVE
+Dialogue: 0,0:00:17.36,0:00:18.70,Normal,,0,0,0,,A
+Dialogue: 0,0:00:17.50,0:00:19.26,Normal,,0,0,0,,SIGNIFICANT
+Dialogue: 0,0:00:18.06,0:00:19.72,Normal,,0,0,0,,IMPACT
+Dialogue: 0,0:00:18.52,0:00:20.00,Normal,,0,0,0,,IN
+Dialogue: 0,0:00:18.80,0:00:20.08,Normal,,0,0,0,,THE
+Dialogue: 0,0:00:18.88,0:00:20.32,Normal,,0,0,0,,COMING
+Dialogue: 0,0:00:19.12,0:00:20.70,Normal,,0,0,0,,YEARS.
+Dialogue: 0,0:00:20.62,0:00:22.04,Normal,,0,0,0,,CALL
+Dialogue: 0,0:00:20.84,0:00:22.24,Normal,,0,0,0,,TO
+Dialogue: 0,0:00:21.04,0:00:22.64,Normal,,0,0,0,,ACTION.
+Dialogue: 0,0:00:22.14,0:00:24.04,Normal,,0,0,0,,FOLLOW
+Dialogue: 0,0:00:22.84,0:00:24.26,Normal,,0,0,0,,FOR
+Dialogue: 0,0:00:23.06,0:00:24.52,Normal,,0,0,0,,MORE
+Dialogue: 0,0:00:23.32,0:00:24.80,Normal,,0,0,0,,AI
+Dialogue: 0,0:00:23.60,0:00:25.36,Normal,,0,0,0,,-GENERATED
+Dialogue: 0,0:00:24.16,0:00:25.82,Normal,,0,0,0,,CONTENT
+Dialogue: 0,0:00:24.62,0:00:26.08,Normal,,0,0,0,,AND
+Dialogue: 0,0:00:24.88,0:00:26.46,Normal,,0,0,0,,INSIGHTS.

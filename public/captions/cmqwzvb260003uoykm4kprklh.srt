@@ -1,0 +1,32 @@
+1
+00:00:00,000 --> 00:00:04,000
+Hook: Did you know that give me 5
+
+2
+00:00:04,000 --> 00:00:08,000
+facts about boys that girls like? Main Content:
+
+3
+00:00:08,000 --> 00:00:12,000
+Today we're exploring give me 5 facts about
+
+4
+00:00:12,000 --> 00:00:16,000
+boys that girls like. This topic is becoming
+
+5
+00:00:16,000 --> 00:00:20,000
+increasingly important in the YouTube Shorts space. Many
+
+6
+00:00:20,000 --> 00:00:24,000
+experts believe it will have a significant impact
+
+7
+00:00:24,000 --> 00:00:28,000
+in the coming years. Call To Action: Follow
+
+8
+00:00:28,000 --> 00:00:32,000
+for more AI-generated content and insights.
+
