@@ -7,6 +7,8 @@ import path from "path";
 import fs from "fs";
 
 export async function POST(request: Request) {
+  let videoId: string | null = null;
+
   try {
     const session = await auth();
 
@@ -17,10 +19,11 @@ export async function POST(request: Request) {
       );
     }
 
-    const {
-      videoId,
-      voiceType,
-    } = await request.json();
+    const body = await request.json();
+
+    videoId = body.videoId;
+
+    const voiceType = body.voiceType;
 
     if (!videoId) {
       return NextResponse.json(
@@ -32,9 +35,6 @@ export async function POST(request: Request) {
     const user = await prisma.user.findUnique({
       where: {
         email: session.user.email,
-      },
-      include: {
-        subscriptions: true,
       },
     });
 
@@ -59,16 +59,54 @@ export async function POST(request: Request) {
       );
     }
 
-    const updatedVideo = await prisma.video.update({
-      where: {
-        id: video.id,
-      },
-      data: {
-        voiceType: voiceType || video.voiceType,
-      },
-    });
+    // =====================================================
+    // PRODUCTION SAFETY
+    // =====================================================
 
-    if (!updatedVideo.script) {
+    const blockedStatuses = [
+      "generating_images",
+      "generating_voice",
+      "rendering",
+    ];
+
+    if (blockedStatuses.includes(video.status)) {
+      return NextResponse.json(
+        {
+          error: `Video is currently ${video.status.replace(
+            "_",
+            " "
+          )}. Please wait until it finishes.`,
+        },
+        { status: 409 }
+      );
+    }
+
+    // =====================================================
+    // REQUIRE IMAGES
+    // =====================================================
+
+    const imageCount =
+      await prisma.generatedImage.count({
+        where: {
+          videoId: video.id,
+        },
+      });
+
+    if (imageCount === 0) {
+      return NextResponse.json(
+        {
+          error:
+            "Generate images before generating voice.",
+        },
+        { status: 400 }
+      );
+    }
+
+    // =====================================================
+    // REQUIRE SCRIPT
+    // =====================================================
+
+    if (!video.script) {
       return NextResponse.json(
         {
           error:
@@ -78,7 +116,46 @@ export async function POST(request: Request) {
       );
     }
 
-    console.log("🎤 Generating Edge TTS...");
+    // =====================================================
+    // SELECT VOICE
+    // =====================================================
+
+    const selectedVoice =
+      voiceType ||
+      video.voiceType ||
+      "en-US-AriaNeural";
+
+    // =====================================================
+    // MARK VOICE GENERATION AS STARTED
+    // =====================================================
+
+    await prisma.video.update({
+      where: {
+        id: video.id,
+      },
+      data: {
+        voiceType: selectedVoice,
+        status: "generating_voice",
+      },
+    });
+
+    console.log("================================");
+    console.log(
+      "🎤 VOICE GENERATION STARTED"
+    );
+    console.log("VIDEO ID:", video.id);
+    console.log(
+      "VOICE:",
+      selectedVoice
+    );
+    console.log(
+      "STATUS: generating_voice"
+    );
+    console.log("================================");
+
+    // =====================================================
+    // VOICE DIRECTORY
+    // =====================================================
 
     const voiceDir = path.join(
       process.cwd(),
@@ -93,51 +170,133 @@ export async function POST(request: Request) {
       });
     }
 
-    console.log(video.script);
-    console.log(video.script.length);
     console.log(
-      "VOICE SELECTED:",
-      voiceType
+      "SCRIPT LENGTH:",
+      video.script.length
     );
 
-    console.log("VOICE FROM DB:", updatedVideo.voiceType);
+    // =====================================================
+    // GENERATE EDGE TTS
+    // =====================================================
 
     await generateEdgeVoice(
-  updatedVideo.script!,
-  voiceDir,
-  updatedVideo.voiceType || "en-US-AriaNeural"
-);
+      video.script,
+      voiceDir,
+      selectedVoice
+    );
+
+    // =====================================================
+    // VERIFY VOICE FILE
+    // =====================================================
 
     const voiceUrl =
       `/voices/${video.id}/audio.mp3`;
+
+    const voicePath = path.join(
+      process.cwd(),
+      "public",
+      voiceUrl.replace(/^\/+/, "")
+    );
+
+    if (!fs.existsSync(voicePath)) {
+      throw new Error(
+        `Voice generation completed but file was not found: ${voicePath}`
+      );
+    }
 
     console.log(
       "✅ Edge TTS voice generated successfully"
     );
 
-    await prisma.video.update({
-      where: {
-        id: video.id,
-      },
-      data: {
-        voiceUrl,
-      },
-    });
+    console.log(
+      "VOICE FILE:",
+      voicePath
+    );
+
+    // =====================================================
+    // MARK VOICE GENERATION COMPLETE
+    // =====================================================
+
+    const updatedVideo =
+      await prisma.video.update({
+        where: {
+          id: video.id,
+        },
+        data: {
+          voiceUrl,
+          status: "voice_ready",
+        },
+      });
+
+    console.log("================================");
+    console.log(
+      "🎤 VOICE GENERATION COMPLETE"
+    );
+    console.log(
+      "STATUS:",
+      updatedVideo.status
+    );
+    console.log("================================");
 
     return NextResponse.json({
       success: true,
       voiceUrl,
+      status: updatedVideo.status,
     });
   } catch (error: any) {
+    console.error("================================");
     console.error(
       "Voice generation error:",
       error
     );
+    console.error(
+      error?.message
+    );
+    console.error(
+      error?.stack
+    );
+    console.error("================================");
+
+    // =====================================================
+    // MARK VOICE GENERATION AS FAILED
+    // =====================================================
+
+    try {
+      if (videoId) {
+        const session = await auth();
+
+        if (session?.user?.email) {
+          const user =
+            await prisma.user.findUnique({
+              where: {
+                email: session.user.email,
+              },
+            });
+
+          if (user) {
+            await prisma.video.updateMany({
+              where: {
+                id: videoId,
+                userId: user.id,
+              },
+              data: {
+                status: "failed",
+              },
+            });
+          }
+        }
+      }
+    } catch (statusError) {
+      console.error(
+        "Failed to update voice failure status:",
+        statusError
+      );
+    }
 
     return NextResponse.json(
       {
         error:
-          error.message ||
+          error?.message ||
           "Failed to generate voice",
       },
       {

@@ -5,7 +5,13 @@ export type SceneType =
   | "introduction"
   | "explanation"
   | "call_to_action"
-  | "general";
+  | "general"
+  | "portrait"
+  | "urban"
+  | "nature"
+  | "product"
+  | "technology"
+  | "action";
 
 export function buildCinematicPrompt(
   narration: string,

@@ -11,12 +11,9 @@ export function buildImageFilters(
   sceneDurations: number[],
   scenePrompts: ScenePrompt[]
 ): string[] {
-
   const filters: string[] = [];
-  const fps = 30;
 
   for (let i = 0; i < sceneDurations.length; i++) {
-
     const duration = sceneDurations[i];
 
     const scene = scenePrompts[i];
@@ -24,14 +21,16 @@ export function buildImageFilters(
     const motion = scene.motion as MotionPreset;
 
     //--------------------------------------
-    // NEW HOLLYWOOD CAMERA MOTION ENGINE
+    // Hollywood Camera Motion Engine
     //--------------------------------------
 
     const cameraMotion = buildCameraMotion(
-  scene.motion,
-  duration
-);
+      scene.motion,
+      duration
+    );
 
+    //--------------------------------------
+    // Director Plans
     //--------------------------------------
 
     const camera = buildCameraPlan(scene);
@@ -43,6 +42,10 @@ export function buildImageFilters(
     const audio = buildAudioMix(scene);
 
     const color = buildColorPlan(scene);
+
+    //--------------------------------------
+    // Debug
+    //--------------------------------------
 
     console.log("Music Plan", {
       scene: i + 1,
@@ -75,10 +78,6 @@ export function buildImageFilters(
       shake: camera.shake,
     });
 
-    //--------------------------------------
-    // NEW DEBUG
-    //--------------------------------------
-
     console.log(`Scene ${i + 1}`, {
       motion: scene.motion,
       ffmpeg: cameraMotion.zoompan,
@@ -88,26 +87,26 @@ export function buildImageFilters(
     });
 
     //--------------------------------------
+    // FFmpeg Image Filter
+    //--------------------------------------
 
-  filters.push(
-  `[${i}:v]` +
-    `scale=1080:1920:force_original_aspect_ratio=increase,` +
-    `crop=1080:1920,` +
-    `${cameraMotion.zoompan},` +
-    `eq=` +
-    `saturation=${color.saturation}:` +
-    `contrast=${color.contrast}:` +
-    `brightness=${color.brightness}:` +
-    `gamma=${color.gamma},` +
-    (edit.vignette ? "vignette," : "") +
-    `format=yuv420p,` +
-    `trim=duration=${duration},` +
-    `setpts=PTS-STARTPTS` +
-    `[v${i}]`
-);
+    filters.push(
+      `[${i}:v]` +
+        `scale=1080:1920:force_original_aspect_ratio=increase,` +
+        `crop=1080:1920,` +
+        `${cameraMotion.zoompan},` +
+        `eq=` +
+        `saturation=${color.saturation}:` +
+        `contrast=${color.contrast}:` +
+        `brightness=${color.brightness}:` +
+        `gamma=${color.gamma},` +
+        (edit.vignette ? "vignette," : "") +
+        `format=yuv420p,` +
+        `trim=duration=${duration},` +
+        `setpts=PTS-STARTPTS` +
+        `[v${i}]`
+    );
+  }
 
-}
-
-return filters;
-
+  return filters;
 }

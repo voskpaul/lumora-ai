@@ -18,7 +18,7 @@ model User {
   stripeCustomerId     String?
   stripeSubscriptionId String?
   accounts             Account[]
-  CreditPurchase       CreditPurchase?
+  creditPurchase       CreditPurchase?
   generatedImages      GeneratedImage[]
   projects             Project[]
   sessions             Session[]
@@ -38,30 +38,24 @@ model Project {
 }
 
 model Video {
-  id     String  @id @default(cuid())
-  title  String
-  prompt String
-  script String?
-  status String
-
-  voiceUrl      String?
-  voiceDuration Float?
-
-  voiceType String? @default("en-US-AriaNeural")
-
-  format String?
-
-  userId String
-  user   User   @relation(fields: [userId], references: [id])
-
-  scenes Scene[]
-
-  createdAt      DateTime         @default(now())
-  Project        Project?         @relation(fields: [projectId], references: [id])
-  projectId      String?
-  GeneratedImage GeneratedImage[]
+  id             String           @id @default(cuid())
+  title          String
+  prompt         String
+  status         String           @default("draft")
   videoUrl       String?
-  captionsUrl String?
+  createdAt      DateTime         @default(now())
+  projectId      String?
+  userId         String
+  script         String?
+  voiceUrl       String?
+  format         String?
+  voiceDuration  Float?
+  voiceType      String?          @default("en-US-AriaNeural")
+  captionsUrl    String?
+  GeneratedImage GeneratedImage[]
+  scenes         Scene[]
+  project        Project?         @relation(fields: [projectId], references: [id])
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model GeneratedImage {
@@ -71,8 +65,26 @@ model GeneratedImage {
   createdAt DateTime @default(now())
   userId    String
   videoId   String?
+  sceneId   String?
+  scene     Scene?   @relation(fields: [sceneId], references: [id])
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   video     Video?   @relation(fields: [videoId], references: [id], onDelete: Cascade)
+}
+
+model Scene {
+  id                 String           @id @default(cuid())
+  order              Int
+  text               String
+  imagePrompt        String
+  videoId            String
+  createdAt          DateTime         @default(now())
+  duration           Float
+  transitionType     String           @default("fade")
+  transitionDuration Float            @default(0.8)
+  audioUrl           String?
+  audioDuration      Float?
+  generatedImages    GeneratedImage[]
+  video              Video            @relation(fields: [videoId], references: [id], onDelete: Cascade)
 }
 
 model Subscription {
@@ -134,17 +146,4 @@ model CreditPurchase {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model Scene {
-  id String @id @default(cuid())
-
-  order       Int
-  text        String
-  imagePrompt String
-
-  videoId String
-  video   Video  @relation(fields: [videoId], references: [id])
-
-  createdAt DateTime @default(now())
 }

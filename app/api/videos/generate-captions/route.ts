@@ -183,8 +183,6 @@ if (!fs.existsSync(outputAss)) {
 
 fs.copyFileSync(outputAss, assPath);
 
-fs.copyFileSync(outputAss, assPath);
-
 console.log("ASS copied successfully.");
 
 console.log("Public folder now:");
@@ -195,7 +193,7 @@ console.log(
   fs.existsSync(assPath)
 );
 
-const captionsUrl = `/captions/${srtFilename}`;
+const captionsUrl = `/captions/${assFilename}`;
 
     // Update database
     await prisma.video.update({

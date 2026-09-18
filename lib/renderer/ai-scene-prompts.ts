@@ -2,6 +2,10 @@ import type { SemanticScene } from "./semantic-scenes";
 import { rewritePrompt } from "./prompt-rewriter";
 import { motionForScene } from "./motion-selector";
 import { analyzeEmotion } from "./emotion-engine";
+import {
+  getColorGradeFilter,
+  type ColorGrade,
+} from "./v2/color-grade";
 
 export type ScenePrompt = {
   scene: number;
@@ -21,6 +25,9 @@ export type ScenePrompt = {
   pauseBefore: boolean;
   subtitleScale: number;
   cameraBoost: number;
+
+  // NEW
+  colorGrade: ColorGrade;
 };
 
 function classifyScene(text: string) {
@@ -95,11 +102,41 @@ export async function buildScenePrompts(
 
     const emotion = analyzeEmotion(scene.text);
 
+    let colorGrade: ColorGrade = "cinematic";
+
+switch (emotion.emotion) {
+  case "dramatic":
+    colorGrade = "horror";
+    break;
+
+  case "inspiring":
+    colorGrade = "travel";
+    break;
+
+  case "excited":
+    colorGrade = "luxury";
+    break;
+
+  case "curious":
+    colorGrade = "ai";
+    break;
+
+  case "neutral":
+  default:
+    colorGrade = "corporate";
+}
+
     //----------------------------------------
     // Camera Motion
     //----------------------------------------
 
-    const motion = motionForScene(type);
+    const motion = motionForScene(
+  type,
+  i,
+  emotion.emotion,
+  scene.duration,
+  scenes.length
+);
 
     //----------------------------------------
     // Transition
@@ -164,9 +201,11 @@ export async function buildScenePrompts(
 
       pauseBefore: emotion.pauseBefore,
 
-      subtitleScale: emotion.subtitleScale,
+     subtitleScale: emotion.subtitleScale,
 
-      cameraBoost: emotion.cameraBoost,
+cameraBoost: emotion.cameraBoost,
+
+colorGrade,
     });
   }
 

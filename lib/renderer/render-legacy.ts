@@ -4,7 +4,6 @@ import { createBuilder } from "./ffmpeg-builder";
 import { getAssets } from "./assets";
 import { getAudioDuration } from "./timing";
 import { prepareASS } from "./subtitles";
-import { buildPipeline } from "./pipeline";
 
 type RenderInput = {
   videoId: string;
@@ -34,17 +33,14 @@ export async function renderVideo({
 
   const assets = getAssets(imagesDir);
 
-  const totalDuration = await getAudioDuration(voicePath);
+  const totalDuration = await getAudioDuration(
+    voicePath
+  );
 
   const sceneDurations = distributeSceneDurations(
-  totalDuration,
-  assets.imageCount
-);
-
-  const pipeline = buildPipeline(
-  sceneDurations,
-  []
-);
+    totalDuration,
+    assets.imageCount
+  );
 
   const captions = prepareASS(
     captionsPath,
@@ -60,10 +56,11 @@ export async function renderVideo({
   console.log("Voice:", voicePath);
   console.log("Captions:", captions.path);
   console.log("Duration:", totalDuration);
+  console.log("Scene durations:", sceneDurations);
   console.log("============================");
 
   //---------------------------------------
-  // Current renderer
+  // Current legacy renderer
   //---------------------------------------
 
   await new Promise<void>((resolve, reject) => {
@@ -106,32 +103,54 @@ export async function renderVideo({
   });
 
   //---------------------------------------
-  // Future cinematic renderer
+  // Legacy renderer complete
   //---------------------------------------
 
-  console.log("Pipeline ready:");
-  console.log(pipeline.filterComplex);
-  console.log(pipeline.finalVideoLabel);
+  console.log(
+    "Legacy renderer completed successfully."
+  );
 }
 
-function distributeSceneDurations(totalDuration: number, imageCount: number) {
-  // Return an array of durations (in seconds) for each image/scene.
-  // Distribute the totalDuration evenly across imageCount, handling
-  // edge cases and ensuring the sum of durations equals totalDuration
-  // up to floating point precision.
-  if (imageCount <= 0) return [];
-  if (totalDuration <= 0) return new Array(imageCount).fill(0);
+function distributeSceneDurations(
+  totalDuration: number,
+  imageCount: number
+): number[] {
+  // Return an array of durations (in seconds)
+  // for each image/scene.
+
+  if (imageCount <= 0) {
+    return [];
+  }
+
+  if (totalDuration <= 0) {
+    return new Array(imageCount).fill(0);
+  }
 
   const base = totalDuration / imageCount;
-  // Use rounding to milliseconds to avoid long floats
-  const round = (n: number) => Math.round(n * 1000) / 1000;
 
-  const durations: number[] = new Array(imageCount).fill(round(base));
+  // Round to milliseconds to avoid long floats.
+  const round = (n: number) =>
+    Math.round(n * 1000) / 1000;
 
-  // Correct rounding error by adjusting the last element
-  const currentSum = durations.reduce((a, b) => a + b, 0);
-  const diff = round(totalDuration - currentSum);
-  durations[durations.length - 1] = round(durations[durations.length - 1] + diff);
+  const durations: number[] =
+    new Array(imageCount).fill(
+      round(base)
+    );
+
+  // Correct rounding error by adjusting
+  // the last element.
+  const currentSum = durations.reduce(
+    (a, b) => a + b,
+    0
+  );
+
+  const diff = round(
+    totalDuration - currentSum
+  );
+
+  durations[durations.length - 1] = round(
+    durations[durations.length - 1] + diff
+  );
 
   return durations;
 }

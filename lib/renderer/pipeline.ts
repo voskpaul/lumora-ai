@@ -1,5 +1,4 @@
 import { buildImageFilters } from "./filters";
-import { transitionFilter } from "./transitions";
 import type { ScenePrompt } from "./ai-scene-prompts";
 
 export type PipelineResult = {
@@ -7,57 +6,159 @@ export type PipelineResult = {
   finalVideoLabel: string;
 };
 
+const TRANSITIONS = [
+  "fade",
+  "smoothleft",
+  "smoothright",
+  "smoothup",
+  "smoothdown",
+  "fadeblack",
+  "fadewhite",
+];
+
+function selectTransition(index: number): string {
+  return TRANSITIONS[index % TRANSITIONS.length];
+}
+
 export function buildPipeline(
   sceneDurations: number[],
-  scenePrompts: ScenePrompt[]
+  scenePrompts: ScenePrompt[],
+  transitionDuration: number
 ): PipelineResult {
-
   const filters: string[] = [];
+
   const imageCount = sceneDurations.length;
 
-  filters.push(
-  ...buildImageFilters(
-    sceneDurations,
-    scenePrompts
-  )
-);
+  if (imageCount === 0) {
+    throw new Error(
+      "Cannot build video pipeline: no scenes available."
+    );
+  }
 
-  console.log("========== IMAGE FILTERS ==========");
-  console.log(filters.join("\n"));
-  console.log("===================================");
+  if (scenePrompts.length !== imageCount) {
+    throw new Error(
+      `Scene mismatch: ${imageCount} durations but ${scenePrompts.length} scene prompts.`
+    );
+  }
+
+  if (
+    !Number.isFinite(transitionDuration) ||
+    transitionDuration < 0
+  ) {
+    throw new Error(
+      `Invalid transition duration: ${transitionDuration}`
+    );
+  }
+
+  // =====================================================
+  // IMAGE FILTERS
+  // =====================================================
+
+  filters.push(
+    ...buildImageFilters(
+      sceneDurations,
+      scenePrompts
+    )
+  );
+
+  console.log(
+    "========== IMAGE FILTERS =========="
+  );
+
+  console.log(
+    filters.join("\n")
+  );
+
+  console.log(
+    "Transition duration:",
+    transitionDuration
+  );
+
+  console.log(
+    "==================================="
+  );
+
+  // =====================================================
+  // TRANSITIONS
+  // =====================================================
 
   let previous = "v0";
 
-  const transitionDuration = 0.8;
+  let accumulatedDuration =
+    sceneDurations[0];
 
-  for (let i = 1; i < imageCount; i++) {
-
+  for (
+    let i = 1;
+    i < imageCount;
+    i++
+  ) {
     const current = `v${i}`;
 
     const transition =
-      scenePrompts[i].transition;
+      selectTransition(i - 1);
 
-    const output = `transition${i}`;
+    const output =
+      `transition${i}`;
 
+    /*
+     * Transition begins before the
+     * previous timeline ends.
+     */
     const offset =
-      sceneDurations
-        .slice(0, i)
-        .reduce((a, b) => a + b, 0) -
+      accumulatedDuration -
       transitionDuration;
 
     filters.push(
-      `[${previous}][${current}]xfade=` +
-      `transition=${transition}:` +
-      `duration=${transitionDuration}:` +
-      `offset=${offset}` +
-      `[${output}]`
+      `[${previous}][${current}]` +
+        `xfade=` +
+        `transition=${transition}:` +
+        `duration=${transitionDuration}:` +
+        `offset=${offset}` +
+        `[${output}]`
     );
+
+    console.log(
+      `Transition ${i}`
+    );
+
+    console.log({
+      transition,
+      duration:
+        transitionDuration,
+      offset,
+    });
+
+    /*
+     * Update the actual accumulated
+     * timeline duration.
+     *
+     * Scenes overlap during transitions.
+     */
+    accumulatedDuration +=
+      sceneDurations[i] -
+      transitionDuration;
 
     previous = output;
   }
 
+  console.log(
+    "========== PIPELINE TIMING =========="
+  );
+
+  console.log(
+    "Final timeline duration:",
+    accumulatedDuration
+  );
+
+  console.log(
+    "====================================="
+  );
+
   return {
-    filterComplex: filters.join(";"),
-    finalVideoLabel: `[${previous}]`,
+    filterComplex:
+      filters.join(";"),
+
+    finalVideoLabel:
+      `[${previous}]`,
   };
 }

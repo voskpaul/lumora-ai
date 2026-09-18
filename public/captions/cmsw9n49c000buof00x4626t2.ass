@@ -1,0 +1,78 @@
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 720
+PlayResY: 1280
+WrapStyle: 2
+ScaledBorderAndShadow: yes
+YCbCr Matrix: TV.709
+
+[V4+ Styles]
+Format: Name,Fontname,Fontsize,PrimaryColour,SecondaryColour,OutlineColour,BackColour,Bold,Italic,Underline,StrikeOut,ScaleX,ScaleY,Spacing,Angle,BorderStyle,Outline,Shadow,Alignment,MarginL,MarginR,MarginV,Encoding
+
+Style: Normal,Bebas Neue,68,&H00FFFFFF,&H0000FFFF,&H00000000,&H78000000,1,0,0,0,100,100,0,0,1,4,1,2,70,70,140,1
+
+Style: Highlight,Bebas Neue,68,&H0000FFFF,&H0000FFFF,&H00000000,&H78000000,1,0,0,0,100,100,0,0,1,4,1,2,70,70,140,1
+
+[Events]
+Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
+Dialogue: 0,0:00:00.00,0:00:01.62,Normal,,0,0,0,,HOOK.
+Dialogue: 0,0:00:01.44,0:00:02.92,Normal,,0,0,0,,DID
+Dialogue: 0,0:00:01.72,0:00:03.08,Normal,,0,0,0,,YOU
+Dialogue: 0,0:00:01.88,0:00:03.26,Normal,,0,0,0,,KNOW
+Dialogue: 0,0:00:02.06,0:00:03.42,Normal,,0,0,0,,THAT
+Dialogue: 0,0:00:02.22,0:00:03.66,Normal,,0,0,0,,HOW
+Dialogue: 0,0:00:02.46,0:00:03.88,Normal,,0,0,0,,AI
+Dialogue: 0,0:00:02.68,0:00:04.28,Normal,,0,0,0,,HAS
+Dialogue: 0,0:00:03.08,0:00:04.62,Normal,,0,0,0,,IMPROVED
+Dialogue: 0,0:00:03.42,0:00:04.96,Normal,,0,0,0,,CODING
+Dialogue: 0,0:00:03.76,0:00:05.24,Normal,,0,0,0,,FOR
+Dialogue: 0,0:00:04.04,0:00:05.72,Normal,,0,0,0,,DEVELOPERS
+Dialogue: 0,0:00:04.52,0:00:06.06,Normal,,0,0,0,,TODAY?
+Dialogue: 0,0:00:05.96,0:00:07.40,Normal,,0,0,0,,MAIN
+Dialogue: 0,0:00:06.20,0:00:07.96,Normal,,0,0,0,,CONTENT.
+Dialogue: 0,0:00:07.60,0:00:09.38,Normal,,0,0,0,,TODAY
+Dialogue: 0,0:00:08.18,0:00:09.64,Normal,,0,0,0,,WE'RE
+Dialogue: 0,0:00:08.44,0:00:10.10,Normal,,0,0,0,,EXPLORING
+Dialogue: 0,0:00:08.90,0:00:10.38,Normal,,0,0,0,,HOW
+Dialogue: 0,0:00:09.18,0:00:10.64,Normal,,0,0,0,,AI
+Dialogue: 0,0:00:09.44,0:00:11.06,Normal,,0,0,0,,HAS
+Dialogue: 0,0:00:09.86,0:00:11.40,Normal,,0,0,0,,IMPROVED
+Dialogue: 0,0:00:10.20,0:00:11.78,Normal,,0,0,0,,CODING
+Dialogue: 0,0:00:10.58,0:00:12.04,Normal,,0,0,0,,FOR
+Dialogue: 0,0:00:10.84,0:00:12.52,Normal,,0,0,0,,DEVELOPERS
+Dialogue: 0,0:00:11.32,0:00:12.92,Normal,,0,0,0,,TODAY.
+Dialogue: 0,0:00:12.74,0:00:14.26,Normal,,0,0,0,,THIS
+Dialogue: 0,0:00:13.06,0:00:14.60,Normal,,0,0,0,,TOPIC
+Dialogue: 0,0:00:13.40,0:00:14.82,Normal,,0,0,0,,IS
+Dialogue: 0,0:00:13.62,0:00:15.18,Normal,,0,0,0,,BECOMING
+Dialogue: 0,0:00:13.98,0:00:15.88,Normal,,0,0,0,,INCREASINGLY
+Dialogue: 0,0:00:14.68,0:00:16.42,Normal,,0,0,0,,IMPORTANT
+Dialogue: 0,0:00:15.22,0:00:16.66,Normal,,0,0,0,,IN
+Dialogue: 0,0:00:15.46,0:00:16.76,Normal,,0,0,0,,THE
+Dialogue: 0,0:00:15.56,0:00:17.08,Normal,,0,0,0,,YOUTUBE
+Dialogue: 0,0:00:15.88,0:00:17.38,Normal,,0,0,0,,SHORT
+Dialogue: 0,0:00:16.18,0:00:17.88,Normal,,0,0,0,,SPACE.
+Dialogue: 0,0:00:17.62,0:00:19.24,Normal,,0,0,0,,MANY
+Dialogue: 0,0:00:18.04,0:00:19.74,Normal,,0,0,0,,EXPERTS
+Dialogue: 0,0:00:18.54,0:00:20.20,Normal,,0,0,0,,BELIEVE
+Dialogue: 0,0:00:19.00,0:00:20.38,Normal,,0,0,0,,IT
+Dialogue: 0,0:00:19.18,0:00:20.50,Normal,,0,0,0,,WILL
+Dialogue: 0,0:00:19.30,0:00:20.68,Normal,,0,0,0,,HAVE
+Dialogue: 0,0:00:19.48,0:00:20.80,Normal,,0,0,0,,A
+Dialogue: 0,0:00:19.60,0:00:21.36,Normal,,0,0,0,,SIGNIFICANT
+Dialogue: 0,0:00:20.16,0:00:21.82,Normal,,0,0,0,,IMPACT
+Dialogue: 0,0:00:20.62,0:00:22.10,Normal,,0,0,0,,IN
+Dialogue: 0,0:00:20.90,0:00:22.20,Normal,,0,0,0,,THE
+Dialogue: 0,0:00:21.00,0:00:22.44,Normal,,0,0,0,,COMING
+Dialogue: 0,0:00:21.24,0:00:22.82,Normal,,0,0,0,,YEARS.
+Dialogue: 0,0:00:22.80,0:00:24.16,Normal,,0,0,0,,CALL
+Dialogue: 0,0:00:22.96,0:00:24.36,Normal,,0,0,0,,TO
+Dialogue: 0,0:00:23.16,0:00:24.78,Normal,,0,0,0,,ACTION.
+Dialogue: 0,0:00:24.42,0:00:26.14,Normal,,0,0,0,,FOLLOW
+Dialogue: 0,0:00:24.94,0:00:26.38,Normal,,0,0,0,,FOR
+Dialogue: 0,0:00:25.18,0:00:26.56,Normal,,0,0,0,,MORE
+Dialogue: 0,0:00:25.36,0:00:26.90,Normal,,0,0,0,,AI
+Dialogue: 0,0:00:25.70,0:00:27.48,Normal,,0,0,0,,-GENERATED
+Dialogue: 0,0:00:26.28,0:00:27.92,Normal,,0,0,0,,CONTENT
+Dialogue: 0,0:00:26.72,0:00:28.18,Normal,,0,0,0,,AND
+Dialogue: 0,0:00:26.98,0:00:28.56,Normal,,0,0,0,,INSIGHTS.

@@ -1,11 +1,11 @@
 import { getAssets } from "../assets";
 import { getAudioDuration } from "../timing";
 import { prepareASS } from "../subtitles";
-
 import { parseASS } from "../subtitle-parser";
 import { buildSemanticScenes } from "../semantic-scenes";
-import { buildScenePrompts } from "../ai-scene-prompts";
 import { applyDirectorTiming } from "../director-timing";
+
+import { buildScenePrompts } from "./ai-scene-prompts";
 
 type DirectorInput = {
   imagesDir: string;
@@ -18,19 +18,38 @@ export async function buildDirectorPlan({
   voicePath,
   captionsPath,
 }: DirectorInput) {
+  //---------------------------------------
+  // Assets
+  //---------------------------------------
 
   const assets = getAssets(imagesDir);
 
+  //---------------------------------------
+  // Audio
+  //---------------------------------------
+
   const audioDuration =
     await getAudioDuration(voicePath);
+
+  //---------------------------------------
+  // Captions
+  //---------------------------------------
 
   const captions = prepareASS(
     captionsPath,
     captionsPath
   );
 
+  //---------------------------------------
+  // Subtitle Scenes
+  //---------------------------------------
+
   const subtitleScenes =
     parseASS(captions.path);
+
+  //---------------------------------------
+  // Semantic Scenes
+  //---------------------------------------
 
   const videoScenes =
     buildSemanticScenes(
@@ -38,18 +57,34 @@ export async function buildDirectorPlan({
       assets.imageCount
     );
 
+  //---------------------------------------
+  // AI Scene Prompts
+  //---------------------------------------
+
   const scenePrompts =
     await buildScenePrompts(videoScenes);
 
+  //---------------------------------------
+  // INITIAL DURATIONS
+  //---------------------------------------
+
   const rawDurations =
     videoScenes.map(
-      scene => scene.duration
+      (scene) => scene.duration
     );
+
+  //---------------------------------------
+  // DURATION WEIGHTS
+  //---------------------------------------
 
   const sceneWeights =
     scenePrompts.map(
-      scene => scene.durationWeight
+      (scene) => scene.durationWeight
     );
+
+  //---------------------------------------
+  // FINAL DIRECTOR TIMING
+  //---------------------------------------
 
   const sceneDurations =
     applyDirectorTiming(
@@ -58,8 +93,78 @@ export async function buildDirectorPlan({
       Math.round(audioDuration)
     );
 
-  return {
+  //---------------------------------------
+  // APPLY FINAL DURATIONS
+  //---------------------------------------
 
+  const directedScenes =
+    scenePrompts.map(
+      (scene, index) => {
+        const duration =
+          sceneDurations[index];
+
+        console.log(
+          "🎥 DIRECTOR FINAL MOTION:",
+          {
+            sceneIndex: index,
+            selectedMotion: scene.motion,
+            duration,
+            emotion: scene.emotion,
+            sceneType: scene.sceneType,
+          }
+        );
+
+        //-----------------------------------
+        // Convert V2 ScenePrompt into the
+        // shape expected by the existing
+        // V1 pipeline.
+        //-----------------------------------
+
+        return {
+          scene: scene.sceneIndex,
+
+          duration,
+
+          narration:
+            videoScenes[index]?.text ??
+            scene.prompt,
+
+          imagePrompt:
+            scene.prompt,
+
+          motion:
+            scene.motion,
+
+          type:
+            scene.sceneType,
+
+          transition: "fade",
+
+          emphasis: 1,
+
+          durationWeight:
+            scene.durationWeight,
+
+          emotion:
+            scene.emotion,
+
+          pauseBefore: false,
+
+          subtitleScale: 1,
+
+          cameraBoost: 1,
+
+          colorGrade:
+            scene.colorGrade,
+        };
+      }
+    );
+
+  //---------------------------------------
+  // RETURN DIRECTOR PLAN
+  //---------------------------------------
+
+  return {
     assets,
 
     captions,
@@ -68,14 +173,12 @@ export async function buildDirectorPlan({
 
     videoScenes,
 
-    scenePrompts,
+    scenePrompts: directedScenes,
 
     rawDurations,
 
     sceneDurations,
 
     audioDuration,
-
   };
-
 }

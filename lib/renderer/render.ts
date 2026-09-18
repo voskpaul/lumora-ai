@@ -7,7 +7,6 @@ import { createSlideshow } from "./slideshow";
 import { getAudioDuration } from "./timing";
 
 
-
 type RenderInput = {
 
   videoId: string;

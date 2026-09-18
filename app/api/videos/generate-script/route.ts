@@ -1,110 +1,261 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import type { Scene } from "@prisma/client";
 
 export async function POST(req: Request) {
-try {
-const session = await auth();
+  try {
+    // =====================================================
+    // AUTHENTICATION
+    // =====================================================
 
+    const session = await auth();
 
-if (!session?.user?.email) {
-  return NextResponse.json(
-    { error: "Unauthorized" },
-    { status: 401 }
-  );
-}
+    if (!session?.user?.email) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
 
-const {
-  prompt,
-  category,
-  projectId,
-  format,
-  voiceType,
-} = await req.json();
-console.log("VOICE RECEIVED:", voiceType);
+    // =====================================================
+    // REQUEST BODY
+    // =====================================================
 
-if (!prompt?.trim()) {
-  return NextResponse.json(
-    { error: "Prompt is required" },
-    { status: 400 }
-  );
-}
+    const {
+      prompt,
+      category,
+      projectId,
+      format,
+      voiceType,
+    } = await req.json();
 
-const user = await prisma.user.findUnique({
-  where: {
-    email: session.user.email,
-  },
-});
+    if (!prompt?.trim()) {
+      return NextResponse.json(
+        { error: "Prompt is required" },
+        { status: 400 }
+      );
+    }
 
-if (!user) {
-  return NextResponse.json(
-    { error: "User not found" },
-    { status: 404 }
-  );
-}
+    // =====================================================
+    // GET USER
+    // =====================================================
 
-const script = generateScriptFromPrompt(
-  prompt,
-  category
-);
-console.log("VOICE RECEIVED:", voiceType);
+    const user = await prisma.user.findUnique({
+      where: {
+        email: session.user.email,
+      },
+      select: {
+        id: true,
+        email: true,
+      },
+    });
 
-const video = await prisma.video.create({
-  data: {
-    title: prompt.slice(0, 80),
-    prompt,
-    script,
-    status: "draft",
-    format: format || "shorts",
-    voiceType:
-      voiceType || "en-US-AriaNeural",
-    userId: user.id,
-    projectId: projectId || null,
-  },
-});
-console.log("VOICE SAVED:", video.voiceType);
+    if (!user) {
+      return NextResponse.json(
+        { error: "User not found" },
+        { status: 404 }
+      );
+    }
 
-return NextResponse.json({
-  success: true,
-  video,
-});
+    // =====================================================
+    // GENERATE SCRIPT
+    // =====================================================
 
+    const script = generateScriptFromPrompt(
+      prompt,
+      category || "YouTube Shorts"
+    );
 
-} catch (error: any) {
-console.error(
-"Generate script error:",
-error
-);
+    // =====================================================
+    // CREATE VIDEO
+    // =====================================================
 
-return NextResponse.json(
-  {
-    error:
-      error.message ||
-      "Failed to generate script",
-  },
-  {
-    status: 500,
+    const video = await prisma.video.create({
+      data: {
+        title: prompt.slice(0, 80),
+        prompt,
+        script,
+        status: "draft",
+        format: format || "shorts",
+        voiceType:
+          voiceType || "en-US-AriaNeural",
+        userId: user.id,
+        projectId: projectId || null,
+      },
+    });
+
+    console.log("");
+    console.log(
+      "================================"
+    );
+    console.log(
+      "VIDEO CREATED SUCCESSFULLY"
+    );
+    console.log(
+      "VIDEO ID:",
+      video.id
+    );
+    console.log(
+      "VIDEO TITLE:",
+      video.title
+    );
+    console.log(
+      "================================"
+    );
+
+    // =====================================================
+    // CREATE INITIAL TIMELINE SCENES
+    // =====================================================
+
+    const scenes = [
+      {
+        order: 0,
+        text: `Did you know that ${prompt}?`,
+        imagePrompt: `Cinematic visual representing ${prompt}, attention-grabbing opening shot`,
+        duration: 5,
+        videoId: video.id,
+      },
+
+      {
+        order: 1,
+        text: `Today we're exploring ${prompt}. This topic is becoming increasingly important in the ${
+          category || "YouTube Shorts"
+        } space. Many experts believe it will have a significant impact in the coming years.`,
+        imagePrompt: `Cinematic professional visual explaining ${prompt}, modern environment, dramatic lighting`,
+        duration: 15,
+        videoId: video.id,
+      },
+
+      {
+        order: 2,
+        text: "Follow for more AI-generated content and insights.",
+        imagePrompt: `Cinematic closing shot related to ${prompt}, inspiring social media ending`,
+        duration: 8,
+        videoId: video.id,
+      },
+    ];
+
+    // =====================================================
+    // SAVE SCENES
+    // =====================================================
+
+    await prisma.scene.createMany({
+      data: scenes,
+    });
+
+    console.log(
+      "INITIAL SCENES CREATED:",
+      scenes.length
+    );
+
+    // =====================================================
+    // VERIFY SCENES IMMEDIATELY
+    // =====================================================
+
+    const savedScenes =
+      await prisma.scene.findMany({
+        where: {
+          videoId: video.id,
+        },
+        orderBy: {
+          order: "asc",
+        },
+      });
+
+    console.log(
+      "DATABASE SCENES AFTER CREATION:",
+      savedScenes.length
+    );
+
+    console.log(
+      "SCENE VIDEO IDS:",
+      savedScenes.map(
+  (scene: Scene) => scene.videoId
+)
+    );
+
+    console.log(
+      "================================"
+    );
+    console.log(
+      "GENERATE SCRIPT COMPLETE"
+    );
+    console.log(
+      "RETURNING VIDEO ID:",
+      video.id
+    );
+    console.log(
+      "RETURNING SCENES:",
+      savedScenes.length
+    );
+    console.log(
+      "================================"
+    );
+    console.log("");
+
+    // =====================================================
+    // RESPONSE
+    // =====================================================
+
+    return NextResponse.json({
+      success: true,
+
+      video: {
+        ...video,
+      },
+
+      scenes: savedScenes,
+    });
+  } catch (error: unknown) {
+    console.error(
+      "Generate script error:",
+      error
+    );
+
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Failed to generate script";
+
+    return NextResponse.json(
+      {
+        error: message,
+      },
+      {
+        status: 500,
+      }
+    );
   }
-);
+}
 
-}
-}
+// =====================================================
+// GENERATE SCRIPT
+// =====================================================
 
 function generateScriptFromPrompt(
-prompt: string,
-category: string
+  prompt: string,
+  category: string
 ) {
-return `
+  return `
 Hook:
+
 Did you know that ${prompt}?
 
+
+
 Main Content:
+
 Today we're exploring ${prompt}.
+
 This topic is becoming increasingly important in the ${category} space.
 
 Many experts believe it will have a significant impact in the coming years.
 
+
+
 Call To Action:
+
 Follow for more AI-generated content and insights.
 `.trim();
 }

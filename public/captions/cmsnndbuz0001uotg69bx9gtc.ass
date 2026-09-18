@@ -1,0 +1,80 @@
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 720
+PlayResY: 1280
+WrapStyle: 2
+ScaledBorderAndShadow: yes
+YCbCr Matrix: TV.709
+
+[V4+ Styles]
+Format: Name,Fontname,Fontsize,PrimaryColour,SecondaryColour,OutlineColour,BackColour,Bold,Italic,Underline,StrikeOut,ScaleX,ScaleY,Spacing,Angle,BorderStyle,Outline,Shadow,Alignment,MarginL,MarginR,MarginV,Encoding
+
+Style: Normal,Bebas Neue,68,&H00FFFFFF,&H0000FFFF,&H00000000,&H78000000,1,0,0,0,100,100,0,0,1,4,1,2,70,70,140,1
+
+Style: Highlight,Bebas Neue,68,&H0000FFFF,&H0000FFFF,&H00000000,&H78000000,1,0,0,0,100,100,0,0,1,4,1,2,70,70,140,1
+
+[Events]
+Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
+Dialogue: 0,0:00:00.00,0:00:01.62,Normal,,0,0,0,,HOOK.
+Dialogue: 0,0:00:01.12,0:00:02.92,Normal,,0,0,0,,DID
+Dialogue: 0,0:00:01.72,0:00:03.08,Normal,,0,0,0,,YOU
+Dialogue: 0,0:00:01.88,0:00:03.26,Normal,,0,0,0,,KNOW
+Dialogue: 0,0:00:02.06,0:00:03.40,Normal,,0,0,0,,THAT
+Dialogue: 0,0:00:02.20,0:00:03.54,Normal,,0,0,0,,GIVE
+Dialogue: 0,0:00:02.34,0:00:03.70,Normal,,0,0,0,,ME
+Dialogue: 0,0:00:02.50,0:00:03.92,Normal,,0,0,0,,TOP
+Dialogue: 0,0:00:02.72,0:00:04.26,Normal,,0,0,0,,10
+Dialogue: 0,0:00:03.06,0:00:04.56,Normal,,0,0,0,,THINGS
+Dialogue: 0,0:00:03.36,0:00:04.76,Normal,,0,0,0,,TO
+Dialogue: 0,0:00:03.56,0:00:04.94,Normal,,0,0,0,,KNOW
+Dialogue: 0,0:00:03.74,0:00:05.22,Normal,,0,0,0,,ABOUT
+Dialogue: 0,0:00:04.02,0:00:05.44,Normal,,0,0,0,,AI?
+Dialogue: 0,0:00:05.46,0:00:06.90,Normal,,0,0,0,,MAIN
+Dialogue: 0,0:00:05.70,0:00:07.44,Normal,,0,0,0,,CONTENT.
+Dialogue: 0,0:00:07.10,0:00:08.86,Normal,,0,0,0,,TODAY
+Dialogue: 0,0:00:07.66,0:00:09.12,Normal,,0,0,0,,WE'RE
+Dialogue: 0,0:00:07.92,0:00:09.62,Normal,,0,0,0,,EXPLORING
+Dialogue: 0,0:00:08.42,0:00:09.82,Normal,,0,0,0,,GIVE
+Dialogue: 0,0:00:08.62,0:00:09.98,Normal,,0,0,0,,ME
+Dialogue: 0,0:00:08.78,0:00:10.22,Normal,,0,0,0,,TOP
+Dialogue: 0,0:00:09.02,0:00:10.56,Normal,,0,0,0,,10
+Dialogue: 0,0:00:09.36,0:00:10.82,Normal,,0,0,0,,THINGS
+Dialogue: 0,0:00:09.62,0:00:11.02,Normal,,0,0,0,,TO
+Dialogue: 0,0:00:09.82,0:00:11.18,Normal,,0,0,0,,KNOW
+Dialogue: 0,0:00:09.98,0:00:11.44,Normal,,0,0,0,,ABOUT
+Dialogue: 0,0:00:10.24,0:00:11.76,Normal,,0,0,0,,AI.
+Dialogue: 0,0:00:11.64,0:00:13.18,Normal,,0,0,0,,THIS
+Dialogue: 0,0:00:11.98,0:00:13.52,Normal,,0,0,0,,TOPIC
+Dialogue: 0,0:00:12.32,0:00:13.74,Normal,,0,0,0,,IS
+Dialogue: 0,0:00:12.54,0:00:14.06,Normal,,0,0,0,,BECOMING
+Dialogue: 0,0:00:12.86,0:00:14.76,Normal,,0,0,0,,INCREASINGLY
+Dialogue: 0,0:00:13.56,0:00:15.32,Normal,,0,0,0,,IMPORTANT
+Dialogue: 0,0:00:14.12,0:00:15.58,Normal,,0,0,0,,IN
+Dialogue: 0,0:00:14.38,0:00:15.68,Normal,,0,0,0,,THE
+Dialogue: 0,0:00:14.48,0:00:15.98,Normal,,0,0,0,,YOUTUBE
+Dialogue: 0,0:00:14.78,0:00:16.28,Normal,,0,0,0,,SHORT
+Dialogue: 0,0:00:15.08,0:00:16.80,Normal,,0,0,0,,SPACE.
+Dialogue: 0,0:00:16.48,0:00:18.18,Normal,,0,0,0,,MANY
+Dialogue: 0,0:00:16.98,0:00:18.66,Normal,,0,0,0,,EXPERTS
+Dialogue: 0,0:00:17.46,0:00:19.12,Normal,,0,0,0,,BELIEVE
+Dialogue: 0,0:00:17.92,0:00:19.30,Normal,,0,0,0,,IT
+Dialogue: 0,0:00:18.10,0:00:19.42,Normal,,0,0,0,,WILL
+Dialogue: 0,0:00:18.22,0:00:19.60,Normal,,0,0,0,,HAVE
+Dialogue: 0,0:00:18.40,0:00:19.72,Normal,,0,0,0,,A
+Dialogue: 0,0:00:18.52,0:00:20.28,Normal,,0,0,0,,SIGNIFICANT
+Dialogue: 0,0:00:19.08,0:00:20.74,Normal,,0,0,0,,IMPACT
+Dialogue: 0,0:00:19.54,0:00:21.02,Normal,,0,0,0,,IN
+Dialogue: 0,0:00:19.82,0:00:21.12,Normal,,0,0,0,,THE
+Dialogue: 0,0:00:19.92,0:00:21.34,Normal,,0,0,0,,COMING
+Dialogue: 0,0:00:20.14,0:00:21.72,Normal,,0,0,0,,YEARS.
+Dialogue: 0,0:00:21.70,0:00:23.06,Normal,,0,0,0,,CALL
+Dialogue: 0,0:00:21.86,0:00:23.26,Normal,,0,0,0,,TO
+Dialogue: 0,0:00:22.06,0:00:23.68,Normal,,0,0,0,,ACTION.
+Dialogue: 0,0:00:23.26,0:00:25.06,Normal,,0,0,0,,FOLLOW
+Dialogue: 0,0:00:23.86,0:00:25.28,Normal,,0,0,0,,FOR
+Dialogue: 0,0:00:24.08,0:00:25.48,Normal,,0,0,0,,MORE
+Dialogue: 0,0:00:24.28,0:00:25.82,Normal,,0,0,0,,AI
+Dialogue: 0,0:00:24.62,0:00:26.38,Normal,,0,0,0,,-GENERATED
+Dialogue: 0,0:00:25.18,0:00:26.84,Normal,,0,0,0,,CONTENT
+Dialogue: 0,0:00:25.64,0:00:27.08,Normal,,0,0,0,,AND
+Dialogue: 0,0:00:25.88,0:00:27.48,Normal,,0,0,0,,INSIGHTS.
