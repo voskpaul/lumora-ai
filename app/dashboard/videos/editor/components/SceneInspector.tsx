@@ -481,30 +481,27 @@ export default function SceneInspector({
 
       {/* IMAGE */}
 
-      <div className="mb-5">
-        <div className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-white/40">
-          Scene Image
-        </div>
+     {/* IMAGE */}
 
-        <div className="aspect-video overflow-hidden rounded-lg border border-white/10 bg-black">
-          {scene.generatedImage?.imageUrl ? (
-            <img
-              src={
-                scene.generatedImage
-                  .imageUrl
-              }
-              alt={`Scene ${
-                sceneIndex + 1
-              }`}
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center text-xs text-white/30">
-              No generated image
-            </div>
-          )}
-        </div>
+<div className="mb-5">
+  <div className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-white/40">
+    Scene Image
+  </div>
+
+  <div className="mx-auto aspect-[9/16] w-full max-w-[280px] overflow-hidden rounded-lg border border-white/10 bg-black">
+    {scene.generatedImage?.imageUrl ? (
+      <img
+        src={scene.generatedImage.imageUrl}
+        alt={`Scene ${sceneIndex + 1}`}
+        className="h-full w-full object-cover object-center"
+      />
+    ) : (
+      <div className="flex h-full items-center justify-center text-xs text-white/30">
+        No generated image
       </div>
+    )}
+  </div>
+</div>
 
       {/* CONTENT GENERATION */}
 
