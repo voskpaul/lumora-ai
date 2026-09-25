@@ -286,20 +286,20 @@ export function buildCameraMotion(
       };
 
     // ----------------------------------
-    // STATIC
-    // ----------------------------------
-    case "static":
-    default:
+// STATIC
+// ----------------------------------
+case "static":
+default:
 
-      return {
-        zoompan:
-          `zoompan=` +
-          `z=1.05:` +
-          `d=${d}:` +
-          `x='iw/2-(iw/zoom/2)':` +
-          `y='ih/2-(ih/zoom/2)':` +
-          `fps=30`,
-      };
+  return {
+    zoompan:
+      `zoompan=` +
+      `z=1:` +
+      `d=${d}:` +
+      `x='iw/2-(iw/zoom/2)':` +
+      `y='ih/2-(ih/zoom/2)':` +
+      `fps=30`,
+  };
   }
 }
 

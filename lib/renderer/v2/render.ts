@@ -18,6 +18,7 @@ import { attachNarration } from "./audio";
 import { attachBackgroundMusic } from "./music";
 
 export type RenderInput = {
+  videoId: string;
   imagesDir: string;
   voicePath: string;
   captionsPath: string;
@@ -314,6 +315,7 @@ async function probe(
 }
 
 export async function renderV2({
+  videoId,
   imagesDir,
   voicePath,
   captionsPath,
@@ -382,6 +384,7 @@ export async function renderV2({
 
   const director =
     await buildDirectorPlan({
+      videoId,
       imagesDir,
       voicePath,
       captionsPath,

@@ -13,11 +13,12 @@ type RenderInput = {
 };
 
 export async function renderCinematic({
+  videoId,
   imagesDir,
   voicePath,
   captionsPath,
   outputPath,
-}: RenderInput): Promise<void> {
+}: RenderInput) {
   // ============================================
   // VALIDATE REQUIRED FILES
   // ============================================
@@ -44,10 +45,11 @@ export async function renderCinematic({
     sceneDurations,
     audioDuration,
   } = await buildDirectorPlan({
-    imagesDir,
-    voicePath,
-    captionsPath,
-  });
+  videoId,
+  imagesDir,
+  voicePath,
+  captionsPath,
+});
 
   // ============================================
   // SCENE VALIDATION

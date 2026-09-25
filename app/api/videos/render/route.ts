@@ -603,27 +603,20 @@ export async function POST(req: Request) {
     // RENDER
     // =====================================================
 
-    const renderResult =
-      await renderV2({
-        imagesDir,
-        voicePath,
-        captionsPath:
-          captionsAssPath,
-        workingDir:
-          tempDir,
-        output:
-          outputPath,
+    const renderResult = await renderV2({
+  videoId: video.id,
+  imagesDir,
+  voicePath,
+  captionsPath: captionsAssPath,
+  workingDir: tempDir,
+  output: outputPath,
 
-        timelineSceneDurations:
-          video.scenes.map(
-            (
-              scene: Scene
-            ): number =>
-              scene.duration
-          ),
-
-        timelineTransitions,
-      });
+  timelineSceneDurations:
+    video.scenes.map(
+      (scene: { duration: number }) =>
+        scene.duration
+    ),
+});
 
     // =====================================================
     // VERIFY RENDER TIMELINE RESULT

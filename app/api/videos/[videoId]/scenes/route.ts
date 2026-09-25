@@ -28,6 +28,7 @@ interface SceneWithImage {
   duration: number;
   transitionType: "fade" | "slide" | "zoom" | "none";
   transitionDuration: number;
+  motionOverride: string | null;
   generatedImage: GeneratedImageData | null;
   audioUrl: string | null;
   audioDuration: number | null;
@@ -41,6 +42,7 @@ interface IncomingScene {
   duration: number;
   transitionType?: "fade" | "slide" | "zoom" | "none";
   transitionDuration?: number;
+  motionOverride?: string | null;
 }
 
 // =====================================================
@@ -160,23 +162,37 @@ export async function GET(
     // =====================================================
 
     const scenesWithImages: SceneWithImage[] =
-      prismaScenes.map(
-        (scene: Scene) => ({
-          id: scene.id,
-          order: scene.order,
-          text: scene.text,
-          imagePrompt: scene.imagePrompt,
-          duration: scene.duration,
-          transitionType: scene.transitionType as SceneWithImage["transitionType"],
-          transitionDuration: scene.transitionDuration,
-          generatedImage:
-            imagesBySceneId.get(
-              scene.id
-            ) ?? null,
-          audioUrl: scene.audioUrl ?? null,
-          audioDuration: scene.audioDuration ?? null,
-        })
-      );
+  prismaScenes.map(
+    (scene: Scene) => ({
+      id: scene.id,
+      order: scene.order,
+      text: scene.text,
+      imagePrompt: scene.imagePrompt,
+      duration: scene.duration,
+
+      transitionType:
+        scene.transitionType as SceneWithImage[
+          "transitionType"
+        ],
+
+      transitionDuration:
+        scene.transitionDuration,
+
+      motionOverride:
+        scene.motionOverride ?? null,
+
+      generatedImage:
+        imagesBySceneId.get(
+          scene.id
+        ) ?? null,
+
+      audioUrl:
+        scene.audioUrl ?? null,
+
+      audioDuration:
+        scene.audioDuration ?? null,
+    })
+  );
 
     console.log(
       "SCENES:",
@@ -457,6 +473,9 @@ export async function PUT(
                     : Number.isFinite(scene.transitionDuration)
                       ? Math.max(0, scene.transitionDuration!)
                       : 0.8,
+
+                      motionOverride:
+  scene.motionOverride ?? null,
               },
             });
           }
@@ -511,6 +530,10 @@ export async function PUT(
                       : Number.isFinite(scene.transitionDuration)
                         ? Math.max(0, scene.transitionDuration!)
                         : 0.8,
+
+                        motionOverride:
+  scene.motionOverride ?? null,
+  
                   videoId,
                 },
               });

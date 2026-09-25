@@ -18,11 +18,26 @@ interface TimelineProps {
   isPlaying?: boolean;
 }
 
+type MotionOverride =
+  | "auto"
+  | "static"
+  | "zoomIn"
+  | "zoomOut"
+  | "panLeft"
+  | "panRight"
+  | "panUp"
+  | "panDown"
+  | "dollyIn"
+  | "dollyOut"
+  | "orbit"
+  | "droneUp"
+  | "macroSlide"
+  | "whipPan";
+
 interface GeneratedImage {
   id: string;
   imageUrl: string;
   prompt: string;
-  sceneId?: string | null;
 }
 
 interface Scene {
@@ -42,12 +57,11 @@ interface Scene {
 
   transitionDuration?: number;
 
+  motionOverride?: MotionOverride | null;
+
   label?: string;
 
   generatedImage?: GeneratedImage | null;
-
-  audioUrl?: string | null;
-  audioDuration?: number | null;
 
   sourceSceneId?: string;
 }
@@ -67,9 +81,9 @@ interface ApiScene {
 
   transitionDuration?: number;
 
+  motionOverride?: MotionOverride | null;
+
   generatedImage?: GeneratedImage | null;
-  audioUrl?: string | null;
-  audioDuration?: number | null;
 }
 
 const TRANSITION_DURATION = 0.8;
@@ -621,6 +635,9 @@ export default function Timeline({
                       ? scene.transitionDuration
                       : TRANSITION_DURATION,
 
+                  motionOverride:
+                    scene.motionOverride ?? null,
+
                   generatedImage:
                     scene.generatedImage ??
                     null,
@@ -847,6 +864,8 @@ export default function Timeline({
                     : Number.isFinite(Number(scene.transitionDuration))
                       ? Math.max(0, Number(scene.transitionDuration))
                       : TRANSITION_DURATION,
+                motionOverride:
+                  scene.motionOverride ?? null,
               })),
             }),
           }
@@ -887,14 +906,10 @@ export default function Timeline({
               typeof scene.transitionDuration === "number"
                 ? scene.transitionDuration
                 : localScene?.transitionDuration ?? TRANSITION_DURATION,
+            motionOverride:
+              scene.motionOverride ?? localScene?.motionOverride ?? null,
             generatedImage:
               scene.generatedImage ?? localScene?.generatedImage ?? null,
-            audioUrl:
-              scene.audioUrl ?? localScene?.audioUrl ?? null,
-            audioDuration:
-              typeof scene.audioDuration === "number"
-                ? scene.audioDuration
-                : localScene?.audioDuration ?? null,
             label: localScene?.label,
             sourceSceneId: undefined,
           };
@@ -937,6 +952,7 @@ export default function Timeline({
             duration: scene.duration,
             transitionType: scene.transitionType,
             transitionDuration: scene.transitionDuration,
+            motionOverride: scene.motionOverride ?? null,
             hasImage: Boolean(scene.generatedImage?.imageUrl),
           }))
         );
@@ -1022,6 +1038,7 @@ export default function Timeline({
       duration: NEW_SCENE_DURATION,
       transitionType: "fade",
       transitionDuration: TRANSITION_DURATION,
+      motionOverride: null,
       label: "New Scene",
       generatedImage: previousScene?.generatedImage ?? null,
       sourceSceneId:
@@ -1118,6 +1135,7 @@ export default function Timeline({
           | "zoom"
           | "none";
         transitionDuration: number;
+        motionOverride: MotionOverride | null;
       }
     ) => {
       const currentScenes =
@@ -1607,6 +1625,9 @@ export default function Timeline({
       transitionDuration:
         scene.transitionDuration,
 
+      motionOverride:
+        scene.motionOverride ?? null,
+
       label: `${sceneLabel(
         scene,
         index
@@ -1631,6 +1652,9 @@ export default function Timeline({
 
       transitionDuration:
         scene.transitionDuration,
+
+      motionOverride:
+        scene.motionOverride ?? null,
 
       label: `${sceneLabel(
         scene,
@@ -2144,8 +2168,9 @@ export default function Timeline({
           selectedScene.id
         ) && (
           <div className="mb-3 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-xs text-amber-300/80">
-            This is a new local scene. Apply Changes to
-            persist it before generating image or narration.
+            This is a new local scene. It will
+            be connected to the database in
+            Stage 2B.2.
           </div>
         )}
 
@@ -2180,20 +2205,6 @@ export default function Timeline({
                 selectedSceneId,
                 changes
               );
-            }}
-            onSceneContentUpdated={(changes) => {
-              if (!selectedSceneId) {
-                return;
-              }
-
-              const updated = scenesRef.current.map((scene) =>
-                scene.id === selectedSceneId
-                  ? { ...scene, ...changes }
-                  : scene
-              );
-
-              scenesRef.current = updated;
-              setScenes(updated);
             }}
             onDelete={() => {
               if (

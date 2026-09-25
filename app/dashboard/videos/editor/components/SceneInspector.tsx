@@ -2,6 +2,22 @@
 
 import { useEffect, useState } from "react";
 
+type MotionOverride =
+  | "auto"
+  | "static"
+  | "zoomIn"
+  | "zoomOut"
+  | "panLeft"
+  | "panRight"
+  | "panUp"
+  | "panDown"
+  | "dollyIn"
+  | "dollyOut"
+  | "orbit"
+  | "droneUp"
+  | "macroSlide"
+  | "whipPan";
+
 export type InspectorScene = {
   id: string;
   order: number;
@@ -17,6 +33,8 @@ export type InspectorScene = {
 
   transitionDuration?: number;
 
+  motionOverride?: MotionOverride | null;
+
   label?: string;
 
   generatedImage?: {
@@ -31,7 +49,6 @@ export type InspectorScene = {
 
 interface SceneInspectorProps {
   videoId: string;
-
   scene: InspectorScene | null;
   sceneIndex: number;
   disabled?: boolean;
@@ -46,6 +63,7 @@ interface SceneInspectorProps {
       | "zoom"
       | "none";
     transitionDuration: number;
+    motionOverride: MotionOverride | null;
   }) => Promise<void>;
 
   onSceneContentUpdated?: (changes: {
@@ -54,7 +72,6 @@ interface SceneInspectorProps {
       imageUrl: string;
       prompt: string;
     } | null;
-
     audioUrl?: string | null;
     audioDuration?: number | null;
   }) => void;
@@ -104,30 +121,35 @@ export default function SceneInspector({
   canDelete = true,
 }: SceneInspectorProps) {
   const [text, setText] = useState("");
-  const [imagePrompt, setImagePrompt] = useState("");
+  const [imagePrompt, setImagePrompt] =
+    useState("");
 
-  const [duration, setDuration] = useState("1");
+  const [duration, setDuration] =
+    useState("1");
 
-  const [transitionType, setTransitionType] = useState<
-    "fade" | "slide" | "zoom" | "none"
-  >("fade");
+  const [transitionType, setTransitionType] =
+    useState<
+      "fade" | "slide" | "zoom" | "none"
+    >("fade");
 
   const [
     transitionDuration,
     setTransitionDuration,
   ] = useState("0.8");
 
-  const [saving, setSaving] = useState(false);
-  const [dirty, setDirty] = useState(false);
+  const [motionOverride, setMotionOverride] =
+    useState<MotionOverride>("auto");
+
+  const [saving, setSaving] =
+    useState(false);
+
+  const [dirty, setDirty] =
+    useState(false);
 
   const [imageGenerating, setImageGenerating] =
     useState(false);
-
-  const [
-    narrationGenerating,
-    setNarrationGenerating,
-  ] = useState(false);
-
+  const [narrationGenerating, setNarrationGenerating] =
+    useState(false);
   const [generationError, setGenerationError] =
     useState<string | null>(null);
 
@@ -141,13 +163,13 @@ export default function SceneInspector({
       setDuration("1");
       setTransitionType("fade");
       setTransitionDuration("0.8");
+      setMotionOverride("auto");
       setDirty(false);
       setGenerationError(null);
       return;
     }
 
     setText(scene.text ?? "");
-
     setImagePrompt(
       scene.imagePrompt ?? ""
     );
@@ -174,6 +196,10 @@ export default function SceneInspector({
       )
     );
 
+    setMotionOverride(
+      scene.motionOverride ?? "auto"
+    );
+
     setDirty(false);
     setGenerationError(null);
   }, [scene]);
@@ -198,7 +224,8 @@ export default function SceneInspector({
   };
 
   const handleSave = async () => {
-    const parsedDuration = Number(duration);
+    const parsedDuration =
+      Number(duration);
 
     const safeDuration =
       Number.isFinite(parsedDuration)
@@ -209,7 +236,9 @@ export default function SceneInspector({
         : MIN_DURATION;
 
     const parsedTransitionDuration =
-      Number(transitionDuration);
+      Number(
+        transitionDuration
+      );
 
     const safeTransitionDuration =
       Number.isFinite(
@@ -237,6 +266,10 @@ export default function SceneInspector({
         transitionType,
         transitionDuration:
           safeTransitionDuration,
+        motionOverride:
+          motionOverride === "auto"
+            ? null
+            : motionOverride,
       });
 
       setDuration(
@@ -255,22 +288,14 @@ export default function SceneInspector({
     }
   };
 
-  // =====================================================
-  // GENERATE IMAGE
-  // =====================================================
-
   const handleGenerateImage = async () => {
     if (isTemporaryScene) {
-      setGenerationError(
-        "Apply Changes before generating scene content."
-      );
+      setGenerationError("Apply Changes before generating scene content.");
       return;
     }
 
     if (!imagePrompt.trim()) {
-      setGenerationError(
-        "Image prompt is required."
-      );
+      setGenerationError("Image prompt is required.");
       return;
     }
 
@@ -282,131 +307,86 @@ export default function SceneInspector({
         `/api/videos/${videoId}/scenes/${scene.id}/generate-image`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            imagePrompt: imagePrompt.trim(),
-          }),
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ imagePrompt }),
         }
       );
 
-      const data =
-        await response.json().catch(
-          () => null
-        );
+      const data = await response.json().catch(() => null);
 
       if (!response.ok) {
-        throw new Error(
-          data?.error ||
-            "Failed to generate scene image."
-        );
+        throw new Error(data?.error || "Failed to generate scene image.");
       }
 
-      if (
-        !data?.image?.imageUrl
-      ) {
-        throw new Error(
-          "Image generation succeeded but no image was returned."
-        );
+      if (!data?.image?.imageUrl) {
+        throw new Error("Image generation succeeded but no image was returned.");
       }
 
       onSceneContentUpdated?.({
-        generatedImage:
-          data.image,
+        generatedImage: data.image,
       });
     } catch (error) {
       const message =
         error instanceof Error
           ? error.message
           : "Failed to generate scene image.";
-
       setGenerationError(message);
     } finally {
       setImageGenerating(false);
     }
   };
 
-  // =====================================================
-  // GENERATE NARRATION
-  // =====================================================
+  const handleGenerateNarration = async () => {
+    if (isTemporaryScene) {
+      setGenerationError("Apply Changes before generating scene content.");
+      return;
+    }
 
-  const handleGenerateNarration =
-    async () => {
-      if (isTemporaryScene) {
-        setGenerationError(
-          "Apply Changes before generating scene content."
-        );
-        return;
-      }
+    if (!text.trim()) {
+      setGenerationError("Scene narration is required.");
+      return;
+    }
 
-      if (!text.trim()) {
-        setGenerationError(
-          "Scene narration is required."
-        );
-        return;
-      }
+    try {
+      setNarrationGenerating(true);
+      setGenerationError(null);
 
-      try {
-        setNarrationGenerating(true);
-        setGenerationError(null);
-
-        const response = await fetch(
-          `/api/videos/${videoId}/scenes/${scene.id}/generate-narration`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
-            body: JSON.stringify({
-              text: text.trim(),
-            }),
-          }
-        );
-
-        const data =
-          await response.json().catch(
-            () => null
-          );
-
-        if (!response.ok) {
-          throw new Error(
-            data?.error ||
-              "Failed to generate scene narration."
-          );
+      const response = await fetch(
+        `/api/videos/${videoId}/scenes/${scene.id}/generate-narration`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text }),
         }
+      );
 
-        if (!data?.audioUrl) {
-          throw new Error(
-            "Narration generation succeeded but no audio was returned."
-          );
-        }
+      const data = await response.json().catch(() => null);
 
-        onSceneContentUpdated?.({
-          audioUrl:
-            data.audioUrl,
-          audioDuration:
-            typeof data.audioDuration ===
-            "number"
-              ? data.audioDuration
-              : null,
-        });
-      } catch (error) {
-        const message =
-          error instanceof Error
-            ? error.message
-            : "Failed to generate scene narration.";
-
-        setGenerationError(message);
-      } finally {
-        setNarrationGenerating(false);
+      if (!response.ok) {
+        throw new Error(data?.error || "Failed to generate scene narration.");
       }
-    };
 
-  // =====================================================
-  // RESET
-  // =====================================================
+      if (!data?.audioUrl) {
+        throw new Error("Narration generation succeeded but no audio was returned.");
+      }
+
+      onSceneContentUpdated?.({
+        audioUrl: data.audioUrl,
+        audioDuration:
+          typeof data.audioDuration === "number"
+            ? data.audioDuration
+            : null,
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Failed to generate scene narration.";
+      setGenerationError(message);
+    } finally {
+      setNarrationGenerating(false);
+    }
+  };
 
   const handleReset = () => {
     setText(scene.text ?? "");
@@ -437,8 +417,9 @@ export default function SceneInspector({
       )
     );
 
+    setMotionOverride(scene.motionOverride ?? "auto");
+
     setDirty(false);
-    setGenerationError(null);
   };
 
   return (
@@ -473,49 +454,81 @@ export default function SceneInspector({
 
       {isTemporaryScene && (
         <div className="mb-5 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-xs leading-5 text-amber-300/80">
-          This is a new local scene. Apply
-          Changes first to persist it, then
-          generate its image and narration.
+          This scene is currently local to the
+          scene. Apply Changes first to persist it,
+          then generate its image and narration.
         </div>
       )}
 
+      {/* CAMERA MOTION */}
+
+      <div className="mb-5">
+        <div className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-white/40">
+          Camera Motion
+        </div>
+
+        <select
+          value={motionOverride}
+          onChange={(e) => {
+            setMotionOverride(e.target.value as MotionOverride);
+            markDirty();
+          }}
+          disabled={disabled || saving}
+          className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white outline-none focus:border-cyan-400/40"
+        >
+          <option value="auto" className="bg-zinc-950">Auto — AI Director</option>
+          <option value="static" className="bg-zinc-950">Static</option>
+          <option value="zoomIn" className="bg-zinc-950">Zoom In</option>
+          <option value="zoomOut" className="bg-zinc-950">Zoom Out</option>
+          <option value="panLeft" className="bg-zinc-950">Pan Left</option>
+          <option value="panRight" className="bg-zinc-950">Pan Right</option>
+          <option value="panUp" className="bg-zinc-950">Pan Up</option>
+          <option value="panDown" className="bg-zinc-950">Pan Down</option>
+          <option value="dollyIn" className="bg-zinc-950">Dolly In</option>
+          <option value="dollyOut" className="bg-zinc-950">Dolly Out</option>
+          <option value="orbit" className="bg-zinc-950">Orbit</option>
+          <option value="droneUp" className="bg-zinc-950">Drone Up</option>
+          <option value="macroSlide" className="bg-zinc-950">Macro Slide</option>
+          <option value="whipPan" className="bg-zinc-950">Whip Pan</option>
+        </select>
+
+        <p className="mt-1 text-[10px] text-white/30">
+          Auto uses Lumora's AI camera director.
+        </p>
+      </div>
+
       {/* IMAGE */}
 
-     {/* IMAGE */}
+      <div className="mb-5">
+        <div className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-white/40">
+          Scene Image
+        </div>
 
-<div className="mb-5">
-  <div className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-white/40">
-    Scene Image
-  </div>
-
-  <div className="mx-auto aspect-[9/16] w-full max-w-[280px] overflow-hidden rounded-lg border border-white/10 bg-black">
-    {scene.generatedImage?.imageUrl ? (
-      <img
-        src={scene.generatedImage.imageUrl}
-        alt={`Scene ${sceneIndex + 1}`}
-        className="h-full w-full object-cover object-center"
-      />
-    ) : (
-      <div className="flex h-full items-center justify-center text-xs text-white/30">
-        No generated image
+        <div className="aspect-video overflow-hidden rounded-lg border border-white/10 bg-black">
+          {scene.generatedImage?.imageUrl ? (
+            <img
+              src={
+                scene.generatedImage
+                  .imageUrl
+              }
+              alt={`Scene ${
+                sceneIndex + 1
+              }`}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center text-xs text-white/30">
+              No generated image
+            </div>
+          )}
+        </div>
       </div>
-    )}
-  </div>
-</div>
-
-      {/* CONTENT GENERATION */}
 
       <div className="mb-5 grid grid-cols-2 gap-2">
         <button
           type="button"
           onClick={handleGenerateImage}
-          disabled={
-            disabled ||
-            saving ||
-            imageGenerating ||
-            narrationGenerating ||
-            isTemporaryScene
-          }
+          disabled={disabled || saving || imageGenerating || narrationGenerating || isTemporaryScene}
           className="rounded-lg border border-cyan-400/20 bg-cyan-400/5 px-3 py-2 text-xs font-medium text-cyan-300 transition hover:bg-cyan-400/10 disabled:cursor-not-allowed disabled:opacity-30"
         >
           {imageGenerating
@@ -527,16 +540,8 @@ export default function SceneInspector({
 
         <button
           type="button"
-          onClick={
-            handleGenerateNarration
-          }
-          disabled={
-            disabled ||
-            saving ||
-            imageGenerating ||
-            narrationGenerating ||
-            isTemporaryScene
-          }
+          onClick={handleGenerateNarration}
+          disabled={disabled || saving || imageGenerating || narrationGenerating || isTemporaryScene}
           className="rounded-lg border border-violet-400/20 bg-violet-400/5 px-3 py-2 text-xs font-medium text-violet-300 transition hover:bg-violet-400/10 disabled:cursor-not-allowed disabled:opacity-30"
         >
           {narrationGenerating
@@ -547,22 +552,14 @@ export default function SceneInspector({
         </button>
       </div>
 
-      {/* AUDIO STATUS */}
-
-      {scene.audioUrl &&
-        !narrationGenerating && (
-          <div className="mb-5 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/50">
-            Narration ready
-            {typeof scene.audioDuration ===
-            "number"
-              ? ` • ${scene.audioDuration.toFixed(
-                  2
-                )}s`
-              : ""}
-          </div>
-        )}
-
-      {/* ERROR */}
+      {scene.audioUrl && !narrationGenerating && (
+        <div className="mb-5 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/50">
+          Narration ready
+          {typeof scene.audioDuration === "number"
+            ? ` • ${scene.audioDuration.toFixed(2)}s`
+            : ""}
+        </div>
+      )}
 
       {generationError && (
         <div className="mb-5 rounded-lg border border-red-500/20 bg-red-500/5 px-3 py-2 text-xs leading-5 text-red-300">
@@ -671,7 +668,6 @@ export default function SceneInspector({
                 | "zoom"
                 | "none"
             );
-
             markDirty();
           }}
           disabled={
@@ -711,8 +707,7 @@ export default function SceneInspector({
           disabled={
             disabled ||
             saving ||
-            transitionType ===
-              "none"
+            transitionType === "none"
           }
           className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none transition focus:border-cyan-400/50 disabled:cursor-not-allowed disabled:opacity-50"
         >
