@@ -84,7 +84,11 @@ model Scene {
   audioUrl           String?
   audioDuration      Float?
   motionOverride     String?
-
+  audioStartTime     Float?
+  audioTrimStart     Float            @default(0)
+  audioTrimEnd       Float?
+  audioVolume        Float            @default(1)
+  audioMuted         Boolean          @default(false)
   generatedImages    GeneratedImage[]
   video              Video            @relation(fields: [videoId], references: [id], onDelete: Cascade)
 }

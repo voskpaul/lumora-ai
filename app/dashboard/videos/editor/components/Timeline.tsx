@@ -63,6 +63,9 @@ interface Scene {
 
   generatedImage?: GeneratedImage | null;
 
+  audioUrl?: string | null;
+  audioDuration?: number | null;
+
   sourceSceneId?: string;
 }
 
@@ -84,6 +87,9 @@ interface ApiScene {
   motionOverride?: MotionOverride | null;
 
   generatedImage?: GeneratedImage | null;
+
+  audioUrl?: string | null;
+  audioDuration?: number | null;
 }
 
 const TRANSITION_DURATION = 0.8;
@@ -110,6 +116,9 @@ export default function Timeline({
 
   const [selectedSceneId, setSelectedSceneId] =
     useState<string | null>(null);
+
+    const [selectedVoiceSceneId, setSelectedVoiceSceneId] =
+  useState<string | null>(null);
 
   const [transitionEditorId, setTransitionEditorId] =
     useState<string | null>(null);
@@ -453,6 +462,11 @@ export default function Timeline({
     );
 
     console.log(
+  "selectedVoiceSceneId:",
+  selectedVoiceSceneId
+);
+
+    console.log(
       "selectedSceneIndex:",
       scenes.findIndex(
         (scene) =>
@@ -558,6 +572,31 @@ export default function Timeline({
   );
 
   // =====================================================
+// SELECT VOICE CLIP
+// =====================================================
+
+const selectVoiceClip = useCallback(
+  (sceneId: string | null) => {
+    if (sceneId === null) {
+      setSelectedVoiceSceneId(null);
+      return;
+    }
+
+    const scene = scenesRef.current.find(
+      (item) => item.id === sceneId
+    );
+
+    if (!scene || !scene.audioUrl) {
+      setSelectedVoiceSceneId(null);
+      return;
+    }
+
+    setSelectedVoiceSceneId(sceneId);
+  },
+  []
+);
+
+  // =====================================================
   // LOAD SCENES
   // =====================================================
 
@@ -641,6 +680,16 @@ export default function Timeline({
                   generatedImage:
                     scene.generatedImage ??
                     null,
+
+                  audioUrl:
+                    scene.audioUrl ??
+                    null,
+
+                  audioDuration:
+                    typeof scene.audioDuration ===
+                    "number"
+                      ? scene.audioDuration
+                      : null,
                 })
               );
 
@@ -910,6 +959,12 @@ export default function Timeline({
               scene.motionOverride ?? localScene?.motionOverride ?? null,
             generatedImage:
               scene.generatedImage ?? localScene?.generatedImage ?? null,
+            audioUrl:
+              scene.audioUrl ?? localScene?.audioUrl ?? null,
+            audioDuration:
+              typeof scene.audioDuration === "number"
+                ? scene.audioDuration
+                : localScene?.audioDuration ?? null,
             label: localScene?.label,
             sourceSceneId: undefined,
           };
@@ -1329,6 +1384,7 @@ export default function Timeline({
       rect.width;
 
     setSelectedSceneId(null);
+setSelectedVoiceSceneId(null);
 
     seekToTime(
       position * totalDuration
@@ -2226,7 +2282,7 @@ export default function Timeline({
 
       <div
         onClick={handleSeek}
-        className="relative mt-4 h-28 cursor-pointer overflow-visible rounded-lg bg-black/40"
+        className="relative mt-4 h-44 cursor-pointer overflow-visible rounded-lg bg-black/40"
       >
         {loading && (
           <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/30 text-sm text-white/50">
@@ -2566,7 +2622,7 @@ export default function Timeline({
           {!loading &&
             scenes.length > 1 &&
             totalDuration > 0 && (
-              <div className="pointer-events-none absolute inset-0 z-50">
+              <div className="pointer-events-none absolute inset-x-0 top-3 z-50 h-16">
                 {scenes.map(
                   (scene, index) => {
                     if (
@@ -2994,6 +3050,95 @@ export default function Timeline({
             )}
         </div>
 
+        {/* VOICE TRACK */}
+
+<div
+  className="absolute inset-x-0 top-20 h-10 border-t border-white/5 bg-black/20"
+  onClick={(e) => e.stopPropagation()}
+>
+  <div className="absolute left-2 top-1 z-10 text-[10px] font-medium uppercase tracking-wide text-white/40">
+    Voice Track
+  </div>
+
+  {(() => {
+    let voiceElapsed = 0;
+
+    return scenes.map((scene, index) => {
+      const start = voiceElapsed;
+
+      voiceElapsed += scene.duration;
+
+      if (index < scenes.length - 1) {
+        voiceElapsed -= getTransitionDuration(scene);
+      }
+
+      if (!scene.audioUrl) {
+        return null;
+      }
+
+      const duration =
+        typeof scene.audioDuration === "number" &&
+        Number.isFinite(scene.audioDuration)
+          ? Math.max(0, scene.audioDuration)
+          : Math.max(0, scene.duration);
+
+      const voiceWidth =
+        totalDuration > 0
+          ? (duration / totalDuration) * 100
+          : 0;
+
+      const voiceLeft =
+        totalDuration > 0
+          ? (start / totalDuration) * 100
+          : 0;
+
+      const isSelected =
+        selectedVoiceSceneId === scene.id;
+
+      return (
+        <div
+          key={`voice-${scene.id}`}
+          onClick={() => {
+            selectVoiceClip(scene.id);
+            setSelectedSceneId(scene.id);
+          }}
+          className={`absolute top-1 h-8 cursor-pointer overflow-hidden rounded border px-2 py-1 text-[9px] shadow-sm transition ${
+            isSelected
+              ? "border-violet-300 bg-violet-500/50 text-white ring-2 ring-inset ring-violet-200"
+              : "border-violet-300/30 bg-violet-500/25 text-violet-100 hover:bg-violet-500/40"
+          }`}
+          style={{
+            left: `${voiceLeft}%`,
+            width: `${voiceWidth}%`,
+          }}
+          title={`${sceneLabel(
+            scene,
+            index
+          )} narration · ${formatTime(duration)}${
+            isSelected ? " · Selected" : ""
+          }`}
+        >
+          <div className="flex min-w-0 items-center gap-1">
+            <span className="shrink-0">
+              🎙️
+            </span>
+
+            <span className="truncate font-medium">
+              Narration {index + 1}
+            </span>
+
+            {isSelected && (
+              <span className="shrink-0 text-violet-200">
+                ✓
+              </span>
+            )}
+          </div>
+        </div>
+      );
+    });
+  })()}
+</div>
+
         {/* TRACK */}
 
         <div className="absolute inset-x-0 bottom-7 h-1 bg-cyan-500/20" />
@@ -3010,7 +3155,7 @@ export default function Timeline({
         {/* CURRENT TIME LABEL */}
 
         <div className="absolute bottom-2 left-2 text-xs text-white/40">
-          Video Track
+          Video Track · Voice Track
         </div>
 
         {/* TOTAL DURATION */}
