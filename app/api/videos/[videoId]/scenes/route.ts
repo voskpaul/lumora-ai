@@ -30,8 +30,13 @@ interface SceneWithImage {
   transitionDuration: number;
   motionOverride: string | null;
   generatedImage: GeneratedImageData | null;
-  audioUrl: string | null;
-  audioDuration: number | null;
+ audioUrl: string | null;
+audioDuration: number | null;
+audioStartTime: number | null;
+audioTrimStart: number;
+audioTrimEnd: number | null;
+audioVolume: number;
+audioMuted: boolean;
 }
 
 interface IncomingScene {
@@ -43,6 +48,12 @@ interface IncomingScene {
   transitionType?: "fade" | "slide" | "zoom" | "none";
   transitionDuration?: number;
   motionOverride?: string | null;
+
+  audioStartTime?: number | null;
+  audioTrimStart?: number | null;
+  audioTrimEnd?: number | null;
+  audioVolume?: number | null;
+  audioMuted?: boolean | null;
 }
 
 // =====================================================
@@ -191,6 +202,21 @@ export async function GET(
 
       audioDuration:
         scene.audioDuration ?? null,
+
+        audioStartTime:
+  scene.audioStartTime ?? null,
+
+audioTrimStart:
+  scene.audioTrimStart ?? 0,
+
+audioTrimEnd:
+  scene.audioTrimEnd ?? null,
+
+audioVolume:
+  scene.audioVolume ?? 1,
+
+audioMuted:
+  scene.audioMuted ?? false,
     })
   );
 
@@ -476,6 +502,36 @@ export async function PUT(
 
                       motionOverride:
   scene.motionOverride ?? null,
+
+  audioStartTime:
+  typeof scene.audioStartTime === "number" &&
+  Number.isFinite(scene.audioStartTime)
+    ? Math.max(0, scene.audioStartTime)
+    : null,
+
+audioTrimStart:
+  typeof scene.audioTrimStart === "number" &&
+  Number.isFinite(scene.audioTrimStart)
+    ? Math.max(0, scene.audioTrimStart)
+    : 0,
+
+audioTrimEnd:
+  typeof scene.audioTrimEnd === "number" &&
+  Number.isFinite(scene.audioTrimEnd)
+    ? Math.max(0, scene.audioTrimEnd)
+    : null,
+
+audioVolume:
+  typeof scene.audioVolume === "number" &&
+  Number.isFinite(scene.audioVolume)
+    ? Math.min(
+        1,
+        Math.max(0, scene.audioVolume)
+      )
+    : 1,
+
+audioMuted:
+  scene.audioMuted === true,
               },
             });
           }
@@ -533,6 +589,36 @@ export async function PUT(
 
                         motionOverride:
   scene.motionOverride ?? null,
+
+  audioStartTime:
+  typeof scene.audioStartTime === "number" &&
+  Number.isFinite(scene.audioStartTime)
+    ? Math.max(0, scene.audioStartTime)
+    : null,
+
+audioTrimStart:
+  typeof scene.audioTrimStart === "number" &&
+  Number.isFinite(scene.audioTrimStart)
+    ? Math.max(0, scene.audioTrimStart)
+    : 0,
+
+audioTrimEnd:
+  typeof scene.audioTrimEnd === "number" &&
+  Number.isFinite(scene.audioTrimEnd)
+    ? Math.max(0, scene.audioTrimEnd)
+    : null,
+
+audioVolume:
+  typeof scene.audioVolume === "number" &&
+  Number.isFinite(scene.audioVolume)
+    ? Math.min(
+        1,
+        Math.max(0, scene.audioVolume)
+      )
+    : 1,
+
+audioMuted:
+  scene.audioMuted === true,
   
                   videoId,
                 },
@@ -742,12 +828,28 @@ export async function PUT(
           duration: scene.duration,
           transitionType: scene.transitionType as SceneWithImage["transitionType"],
           transitionDuration: scene.transitionDuration,
+          motionOverride: scene.motionOverride ?? null,
           generatedImage:
             imagesBySceneId.get(
               scene.id
             ) ?? null,
           audioUrl: scene.audioUrl ?? null,
           audioDuration: scene.audioDuration ?? null,
+
+          audioStartTime:
+  scene.audioStartTime ?? null,
+
+audioTrimStart:
+  scene.audioTrimStart ?? 0,
+
+audioTrimEnd:
+  scene.audioTrimEnd ?? null,
+
+audioVolume:
+  scene.audioVolume ?? 1,
+
+audioMuted:
+  scene.audioMuted ?? false,
         })
       );
 

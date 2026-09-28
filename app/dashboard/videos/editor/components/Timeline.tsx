@@ -66,6 +66,12 @@ interface Scene {
   audioUrl?: string | null;
   audioDuration?: number | null;
 
+  audioStartTime?: number | null;
+  audioTrimStart?: number | null;
+  audioTrimEnd?: number | null;
+  audioVolume?: number | null;
+  audioMuted?: boolean | null;
+
   sourceSceneId?: string;
 }
 
@@ -90,12 +96,21 @@ interface ApiScene {
 
   audioUrl?: string | null;
   audioDuration?: number | null;
+
+  audioStartTime?: number | null;
+  audioTrimStart?: number | null;
+  audioTrimEnd?: number | null;
+  audioVolume?: number | null;
+  audioMuted?: boolean | null;
 }
 
 const TRANSITION_DURATION = 0.8;
 const MIN_SCENE_DURATION = 1;
-
 const NEW_SCENE_DURATION = 5;
+
+const MIN_VOICE_DURATION = 0.1;
+const MIN_VOICE_VOLUME = 0;
+const MAX_VOICE_VOLUME = 1;
 
 export default function Timeline({
   videoId,
@@ -117,8 +132,8 @@ export default function Timeline({
   const [selectedSceneId, setSelectedSceneId] =
     useState<string | null>(null);
 
-    const [selectedVoiceSceneId, setSelectedVoiceSceneId] =
-  useState<string | null>(null);
+  const [selectedVoiceSceneId, setSelectedVoiceSceneId] =
+    useState<string | null>(null);
 
   const [transitionEditorId, setTransitionEditorId] =
     useState<string | null>(null);
@@ -131,14 +146,16 @@ export default function Timeline({
     side: "left" | "right";
   } | null>(null);
 
+  const [voiceEditing, setVoiceEditing] = useState<{
+    id: string;
+    type: "move" | "trim";
+    side?: "left" | "right";
+  } | null>(null);
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   const scenesRef = useRef<Scene[]>([]);
-
-  // =====================================================
-  // TRIM SESSION REF
-  // =====================================================
 
   const trimSessionRef = useRef<{
     id: string;
@@ -155,13 +172,33 @@ export default function Timeline({
     handleMouseUp: () => void;
   } | null>(null);
 
+  const voiceEditSessionRef = useRef<{
+    id: string;
+    type: "move" | "trim";
+    side?: "left" | "right";
+    startX: number;
+    timelineWidth: number;
+    timelineDuration: number;
+    originalStart: number;
+    originalTrimStart: number;
+    originalTrimEnd: number;
+    originalScenes: Scene[];
+  } | null>(null);
+
+  const voiceEditListenersRef = useRef<{
+    handleMouseMove: (event: MouseEvent) => void;
+    handleMouseUp: () => void;
+  } | null>(null);
+
+  const suppressVoiceClickRef =
+    useRef(false);
+
+  const suppressClickRef =
+    useRef(false);
+
   useEffect(() => {
     scenesRef.current = scenes;
   }, [scenes]);
-
-  // =====================================================
-  // HELPERS
-  // =====================================================
 
   const cloneScenes = useCallback(
     (items: Scene[]) =>
@@ -196,13 +233,10 @@ export default function Timeline({
       switch (transitionType) {
         case "slide":
           return "Slide";
-
         case "zoom":
           return "Zoom";
-
         case "none":
           return "None";
-
         case "fade":
         default:
           return "Fade";
@@ -216,13 +250,10 @@ export default function Timeline({
       switch (transitionType) {
         case "slide":
           return "timelineTransitionSlide";
-
         case "zoom":
           return "timelineTransitionZoom";
-
         case "fade":
           return "timelineTransitionFade";
-
         case "none":
         default:
           return "none";
@@ -279,9 +310,107 @@ export default function Timeline({
     []
   );
 
-  // =====================================================
-  // ACTUAL TIMELINE DURATION
-  // =====================================================
+  const getSceneTimelineStart = useCallback(
+    (items: Scene[], sceneId: string) => {
+      let elapsed = 0;
+
+      for (
+        let index = 0;
+        index < items.length;
+        index++
+      ) {
+        const scene = items[index];
+
+        if (scene.id === sceneId) {
+          return elapsed;
+        }
+
+        elapsed += scene.duration;
+
+        if (index < items.length - 1) {
+          elapsed -= getTransitionDuration(scene);
+        }
+      }
+
+      return 0;
+    },
+    [getTransitionDuration]
+  );
+
+  const getVoiceTrimValues = useCallback(
+    (scene: Scene) => {
+      const audioDuration =
+        typeof scene.audioDuration === "number" &&
+        Number.isFinite(scene.audioDuration)
+          ? Math.max(0, scene.audioDuration)
+          : Math.max(0, scene.duration);
+
+      const trimStart =
+        typeof scene.audioTrimStart === "number" &&
+        Number.isFinite(scene.audioTrimStart)
+          ? Math.max(
+              0,
+              Math.min(
+                audioDuration,
+                scene.audioTrimStart
+              )
+            )
+          : 0;
+
+      const trimEnd =
+        typeof scene.audioTrimEnd === "number" &&
+        Number.isFinite(scene.audioTrimEnd)
+          ? Math.max(
+              0,
+              Math.min(
+                audioDuration - trimStart,
+                scene.audioTrimEnd
+              )
+            )
+          : 0;
+
+      const effectiveDuration = Math.max(
+        MIN_VOICE_DURATION,
+        audioDuration -
+          trimStart -
+          trimEnd
+      );
+
+      return {
+        audioDuration,
+        trimStart,
+        trimEnd,
+        effectiveDuration,
+      };
+    },
+    []
+  );
+
+  const getVoiceStart = useCallback(
+    (
+      scene: Scene,
+      items: Scene[] = scenesRef.current
+    ) => {
+      const sceneStart =
+        getSceneTimelineStart(
+          items,
+          scene.id
+        );
+
+      if (
+        typeof scene.audioStartTime === "number" &&
+        Number.isFinite(scene.audioStartTime)
+      ) {
+        return Math.max(
+          0,
+          scene.audioStartTime
+        );
+      }
+
+      return sceneStart;
+    },
+    [getSceneTimelineStart]
+  );
 
   const totalDuration = useMemo<number>(() => {
     if (scenes.length === 0) {
@@ -327,10 +456,6 @@ export default function Timeline({
     getTransitionDuration,
   ]);
 
-  // =====================================================
-  // PROGRESS
-  // =====================================================
-
   const progress =
     totalDuration > 0
       ? Math.min(
@@ -346,10 +471,6 @@ export default function Timeline({
           )
         )
       : 0;
-
-  // =====================================================
-  // PLAYBACK → ACTIVE SCENE
-  // =====================================================
 
   useEffect(() => {
     if (
@@ -420,52 +541,40 @@ export default function Timeline({
     getTransitionDuration,
   ]);
 
-  // =====================================================
-  // TIMELINE DEBUG
-  // =====================================================
-
   useEffect(() => {
     console.log(
       "========== TIMELINE PLAYHEAD =========="
     );
-
     console.log(
       "currentTime:",
       currentTime
     );
-
     console.log(
       "totalDuration:",
       totalDuration
     );
-
     console.log(
       "progress:",
       progress
     );
-
     console.log(
       "scene durations:",
       scenes.map(
         (scene) => scene.duration
       )
     );
-
     console.log(
       "scene count:",
       scenes.length
     );
-
     console.log(
       "selectedSceneId:",
       selectedSceneId
     );
-
     console.log(
-  "selectedVoiceSceneId:",
-  selectedVoiceSceneId
-);
-
+      "selectedVoiceSceneId:",
+      selectedVoiceSceneId
+    );
     console.log(
       "selectedSceneIndex:",
       scenes.findIndex(
@@ -474,7 +583,6 @@ export default function Timeline({
           selectedSceneId
       )
     );
-
     console.log(
       "selectedSceneLabel:",
       selectedSceneId
@@ -485,47 +593,46 @@ export default function Timeline({
           )?.label
         : null
     );
-
     console.log(
       "trimming:",
       trimming
     );
-
+    console.log(
+      "voiceEditing:",
+      voiceEditing
+    );
     console.log(
       "saving:",
       saving
     );
-
     console.log(
       "loading:",
       loading
     );
-
     console.log(
       "trimSession:",
       trimSessionRef.current
     );
-
+    console.log(
+      "voiceEditSession:",
+      voiceEditSessionRef.current
+    );
     console.log(
       "history length:",
       history.length
     );
-
     console.log(
       "redo length:",
       redoStack.length
     );
-
     console.log(
       "draggedId:",
       draggedId
     );
-
     console.log(
       "dropTargetId:",
       dropTargetId
     );
-
     console.log(
       "========================================"
     );
@@ -535,7 +642,9 @@ export default function Timeline({
     progress,
     scenes,
     selectedSceneId,
+    selectedVoiceSceneId,
     trimming,
+    voiceEditing,
     saving,
     loading,
     history.length,
@@ -543,10 +652,6 @@ export default function Timeline({
     draggedId,
     dropTargetId,
   ]);
-
-  // =====================================================
-  // SELECT SCENE
-  // =====================================================
 
   const selectScene = useCallback(
     (sceneId: string | null) => {
@@ -571,34 +676,28 @@ export default function Timeline({
     []
   );
 
-  // =====================================================
-// SELECT VOICE CLIP
-// =====================================================
+  const selectVoiceClip = useCallback(
+    (sceneId: string | null) => {
+      if (sceneId === null) {
+        setSelectedVoiceSceneId(null);
+        return;
+      }
 
-const selectVoiceClip = useCallback(
-  (sceneId: string | null) => {
-    if (sceneId === null) {
-      setSelectedVoiceSceneId(null);
-      return;
-    }
+      const scene =
+        scenesRef.current.find(
+          (item) => item.id === sceneId
+        );
 
-    const scene = scenesRef.current.find(
-      (item) => item.id === sceneId
-    );
+      if (!scene || !scene.audioUrl) {
+        setSelectedVoiceSceneId(null);
+        return;
+      }
 
-    if (!scene || !scene.audioUrl) {
-      setSelectedVoiceSceneId(null);
-      return;
-    }
-
-    setSelectedVoiceSceneId(sceneId);
-  },
-  []
-);
-
-  // =====================================================
-  // LOAD SCENES
-  // =====================================================
+      setSelectedVoiceSceneId(sceneId);
+      setSelectedSceneId(sceneId);
+    },
+    []
+  );
 
   const loadScenes = useCallback(
     async (
@@ -690,6 +789,42 @@ const selectVoiceClip = useCallback(
                     "number"
                       ? scene.audioDuration
                       : null,
+
+                  audioStartTime:
+                    typeof scene.audioStartTime ===
+                    "number"
+                      ? scene.audioStartTime
+                      : null,
+
+                  audioTrimStart:
+                    typeof scene.audioTrimStart ===
+                    "number"
+                      ? scene.audioTrimStart
+                      : 0,
+
+                  audioTrimEnd:
+                    typeof scene.audioTrimEnd ===
+                    "number"
+                      ? scene.audioTrimEnd
+                      : 0,
+
+                  audioVolume:
+                    typeof scene.audioVolume ===
+                    "number"
+                      ? Math.min(
+                          MAX_VOICE_VOLUME,
+                          Math.max(
+                            MIN_VOICE_VOLUME,
+                            scene.audioVolume
+                          )
+                        )
+                      : 1,
+
+                  audioMuted:
+                    typeof scene.audioMuted ===
+                    "boolean"
+                      ? scene.audioMuted
+                      : false,
                 })
               );
 
@@ -742,6 +877,16 @@ const selectVoiceClip = useCallback(
                     scene.transitionType,
                   transitionDuration:
                     scene.transitionDuration,
+                  audioStartTime:
+                    scene.audioStartTime,
+                  audioTrimStart:
+                    scene.audioTrimStart,
+                  audioTrimEnd:
+                    scene.audioTrimEnd,
+                  audioVolume:
+                    scene.audioVolume,
+                  audioMuted:
+                    scene.audioMuted,
                 })
               )
             );
@@ -778,6 +923,10 @@ const selectVoiceClip = useCallback(
               normalized[0]?.id ?? null
             );
 
+            setSelectedVoiceSceneId(
+              null
+            );
+
             return;
           }
 
@@ -805,6 +954,7 @@ const selectVoiceClip = useCallback(
           setHistory([]);
           setRedoStack([]);
           setSelectedSceneId(null);
+          setSelectedVoiceSceneId(null);
 
           console.log(
             "TIMELINE: video has no scenes."
@@ -873,147 +1023,407 @@ const selectVoiceClip = useCallback(
     };
   }, [loadScenes]);
 
-  // =====================================================
-  // SAVE SCENES
-  // =====================================================
-
   const persistScenes = useCallback(
     async (items: Scene[]) => {
-      const normalized = normalizeScenes(items);
-      const selectedBeforeSave = selectedSceneId;
+      const normalized =
+        normalizeScenes(items);
+
+      const selectedBeforeSave =
+        selectedSceneId;
+
+      const selectedVoiceBeforeSave =
+        selectedVoiceSceneId;
 
       try {
         setSaving(true);
-        scenesRef.current = normalized;
+        scenesRef.current =
+          normalized;
 
         const response = await fetch(
           `/api/videos/${videoId}/scenes`,
           {
             method: "PUT",
             headers: {
-              "Content-Type": "application/json",
+              "Content-Type":
+                "application/json",
             },
             body: JSON.stringify({
-              scenes: normalized.map((scene, index) => ({
-                id: scene.id,
-                sourceSceneId: scene.sourceSceneId,
-                text:
-                  scene.text?.trim() ||
-                  scene.label ||
-                  `Scene ${index + 1}`,
-                imagePrompt: scene.imagePrompt || "",
-                duration: Math.max(
-                  MIN_SCENE_DURATION,
-                  Number(scene.duration) || MIN_SCENE_DURATION
-                ),
-                transitionType: scene.transitionType || "fade",
-                transitionDuration:
-                  scene.transitionType === "none"
-                    ? 0
-                    : Number.isFinite(Number(scene.transitionDuration))
-                      ? Math.max(0, Number(scene.transitionDuration))
-                      : TRANSITION_DURATION,
-                motionOverride:
-                  scene.motionOverride ?? null,
-              })),
+              scenes: normalized.map(
+                (scene, index) => ({
+                  id: scene.id,
+                  sourceSceneId:
+                    scene.sourceSceneId,
+
+                  text:
+                    scene.text?.trim() ||
+                    scene.label ||
+                    `Scene ${index + 1}`,
+
+                  imagePrompt:
+                    scene.imagePrompt || "",
+
+                  duration: Math.max(
+                    MIN_SCENE_DURATION,
+                    Number(scene.duration) ||
+                      MIN_SCENE_DURATION
+                  ),
+
+                  transitionType:
+                    scene.transitionType ||
+                    "fade",
+
+                  transitionDuration:
+                    scene.transitionType ===
+                    "none"
+                      ? 0
+                      : Number.isFinite(
+                            Number(
+                              scene.transitionDuration
+                            )
+                          )
+                        ? Math.max(
+                            0,
+                            Number(
+                              scene.transitionDuration
+                            )
+                          )
+                        : TRANSITION_DURATION,
+
+                  motionOverride:
+                    scene.motionOverride ??
+                    null,
+
+                  audioStartTime:
+                    typeof scene.audioStartTime ===
+                    "number" &&
+                    Number.isFinite(
+                      scene.audioStartTime
+                    )
+                      ? Math.max(
+                          0,
+                          scene.audioStartTime
+                        )
+                      : null,
+
+                  audioTrimStart:
+                    typeof scene.audioTrimStart ===
+                    "number" &&
+                    Number.isFinite(
+                      scene.audioTrimStart
+                    )
+                      ? Math.max(
+                          0,
+                          scene.audioTrimStart
+                        )
+                      : 0,
+
+                  audioTrimEnd:
+                    typeof scene.audioTrimEnd ===
+                    "number" &&
+                    Number.isFinite(
+                      scene.audioTrimEnd
+                    )
+                      ? Math.max(
+                          0,
+                          scene.audioTrimEnd
+                        )
+                      : 0,
+
+                  audioVolume:
+                    typeof scene.audioVolume ===
+                    "number" &&
+                    Number.isFinite(
+                      scene.audioVolume
+                    )
+                      ? Math.min(
+                          MAX_VOICE_VOLUME,
+                          Math.max(
+                            MIN_VOICE_VOLUME,
+                            scene.audioVolume
+                          )
+                        )
+                      : 1,
+
+                  audioMuted:
+                    scene.audioMuted ??
+                    false,
+                })
+              ),
             }),
           }
         );
 
-        const data = await response.json().catch(() => null);
+        const data =
+          await response
+            .json()
+            .catch(() => null);
 
         if (!response.ok) {
           throw new Error(
-            data?.error || `Failed to save scenes (${response.status})`
+            data?.error ||
+              `Failed to save scenes (${response.status})`
           );
         }
 
-        if (!Array.isArray(data?.scenes)) {
-          throw new Error("Save succeeded but no scenes were returned.");
+        if (
+          !Array.isArray(
+            data?.scenes
+          )
+        ) {
+          throw new Error(
+            "Save succeeded but no scenes were returned."
+          );
         }
 
-        const apiScenes = data.scenes as ApiScene[];
+        const apiScenes =
+          data.scenes as ApiScene[];
 
-        // The API replaces temp-* IDs with real Prisma IDs. Match the
-        // returned scenes by order so selection survives the ID change.
-        const savedScenes: Scene[] = apiScenes.map((scene, index) => {
-          const localScene = normalized[index];
+        const savedScenes: Scene[] =
+          apiScenes.map(
+            (scene, index) => {
+              const localScene =
+                normalized[index];
 
-          return {
-            id: scene.id,
-            order: scene.order ?? index,
-            text: scene.text ?? localScene?.text ?? "",
-            imagePrompt:
-              scene.imagePrompt ?? localScene?.imagePrompt ?? "",
-            duration:
-              typeof scene.duration === "number"
-                ? Math.max(MIN_SCENE_DURATION, scene.duration)
-                : localScene?.duration ?? NEW_SCENE_DURATION,
-            transitionType:
-              scene.transitionType ?? localScene?.transitionType ?? "fade",
-            transitionDuration:
-              typeof scene.transitionDuration === "number"
-                ? scene.transitionDuration
-                : localScene?.transitionDuration ?? TRANSITION_DURATION,
-            motionOverride:
-              scene.motionOverride ?? localScene?.motionOverride ?? null,
-            generatedImage:
-              scene.generatedImage ?? localScene?.generatedImage ?? null,
-            audioUrl:
-              scene.audioUrl ?? localScene?.audioUrl ?? null,
-            audioDuration:
-              typeof scene.audioDuration === "number"
-                ? scene.audioDuration
-                : localScene?.audioDuration ?? null,
-            label: localScene?.label,
-            sourceSceneId: undefined,
-          };
-        });
+              return {
+                id: scene.id,
+                order:
+                  scene.order ?? index,
 
-        const normalizedSaved = normalizeScenes(savedScenes);
+                text:
+                  scene.text ??
+                  localScene?.text ??
+                  "",
 
-        scenesRef.current = normalizedSaved;
-        setScenes(normalizedSaved);
+                imagePrompt:
+                  scene.imagePrompt ??
+                  localScene?.imagePrompt ??
+                  "",
 
-        setSelectedSceneId((currentSelectedId) => {
-          const selectedIndex = normalized.findIndex(
-            (scene) => scene.id === currentSelectedId
+                duration:
+                  typeof scene.duration ===
+                  "number"
+                    ? Math.max(
+                        MIN_SCENE_DURATION,
+                        scene.duration
+                      )
+                    : localScene?.duration ??
+                      NEW_SCENE_DURATION,
+
+                transitionType:
+                  scene.transitionType ??
+                  localScene?.transitionType ??
+                  "fade",
+
+                transitionDuration:
+                  typeof scene.transitionDuration ===
+                  "number"
+                    ? scene.transitionDuration
+                    : localScene?.transitionDuration ??
+                      TRANSITION_DURATION,
+
+                motionOverride:
+                  scene.motionOverride ??
+                  localScene?.motionOverride ??
+                  null,
+
+                generatedImage:
+                  scene.generatedImage ??
+                  localScene?.generatedImage ??
+                  null,
+
+                audioUrl:
+                  scene.audioUrl ??
+                  localScene?.audioUrl ??
+                  null,
+
+                audioDuration:
+                  typeof scene.audioDuration ===
+                  "number"
+                    ? scene.audioDuration
+                    : localScene?.audioDuration ??
+                      null,
+
+                audioStartTime:
+                  typeof scene.audioStartTime ===
+                  "number"
+                    ? scene.audioStartTime
+                    : localScene?.audioStartTime ??
+                      null,
+
+                audioTrimStart:
+                  typeof scene.audioTrimStart ===
+                  "number"
+                    ? scene.audioTrimStart
+                    : localScene?.audioTrimStart ??
+                      0,
+
+                audioTrimEnd:
+                  typeof scene.audioTrimEnd ===
+                  "number"
+                    ? scene.audioTrimEnd
+                    : localScene?.audioTrimEnd ??
+                      0,
+
+                audioVolume:
+                  typeof scene.audioVolume ===
+                  "number"
+                    ? Math.min(
+                        MAX_VOICE_VOLUME,
+                        Math.max(
+                          MIN_VOICE_VOLUME,
+                          scene.audioVolume
+                        )
+                      )
+                    : localScene?.audioVolume ??
+                      1,
+
+                audioMuted:
+                  typeof scene.audioMuted ===
+                  "boolean"
+                    ? scene.audioMuted
+                    : localScene?.audioMuted ??
+                      false,
+
+                label:
+                  localScene?.label,
+
+                sourceSceneId:
+                  undefined,
+              };
+            }
           );
 
-          if (
-            selectedIndex >= 0 &&
-            normalizedSaved[selectedIndex]
-          ) {
-            return normalizedSaved[selectedIndex].id;
-          }
+        const normalizedSaved =
+          normalizeScenes(
+            savedScenes
+          );
 
-          if (
-            selectedBeforeSave &&
-            normalizedSaved.some(
-              (scene) => scene.id === selectedBeforeSave
-            )
-          ) {
-            return selectedBeforeSave;
-          }
+        scenesRef.current =
+          normalizedSaved;
 
-          return normalizedSaved[0]?.id ?? null;
-        });
-
-        console.log("========== SCENES AFTER SAVE ==========");
-        console.table(
-          normalizedSaved.map((scene, index) => ({
-            scene: index + 1,
-            id: scene.id,
-            duration: scene.duration,
-            transitionType: scene.transitionType,
-            transitionDuration: scene.transitionDuration,
-            motionOverride: scene.motionOverride ?? null,
-            hasImage: Boolean(scene.generatedImage?.imageUrl),
-          }))
+        setScenes(
+          normalizedSaved
         );
-        console.log("=======================================");
+
+        setSelectedSceneId(
+          (currentSelectedId) => {
+            const selectedIndex =
+              normalized.findIndex(
+                (scene) =>
+                  scene.id ===
+                  currentSelectedId
+              );
+
+            if (
+              selectedIndex >= 0 &&
+              normalizedSaved[
+                selectedIndex
+              ]
+            ) {
+              return normalizedSaved[
+                selectedIndex
+              ].id;
+            }
+
+            if (
+              selectedBeforeSave &&
+              normalizedSaved.some(
+                (scene) =>
+                  scene.id ===
+                  selectedBeforeSave
+              )
+            ) {
+              return selectedBeforeSave;
+            }
+
+            return (
+              normalizedSaved[0]?.id ??
+              null
+            );
+          }
+        );
+
+        setSelectedVoiceSceneId(
+          (currentSelectedId) => {
+            const selectedIndex =
+              normalized.findIndex(
+                (scene) =>
+                  scene.id ===
+                  currentSelectedId
+              );
+
+            if (
+              selectedIndex >= 0 &&
+              normalizedSaved[
+                selectedIndex
+              ]?.audioUrl
+            ) {
+              return normalizedSaved[
+                selectedIndex
+              ].id;
+            }
+
+            if (
+              selectedVoiceBeforeSave &&
+              normalizedSaved.some(
+                (scene) =>
+                  scene.id ===
+                    selectedVoiceBeforeSave &&
+                  Boolean(scene.audioUrl)
+              )
+            ) {
+              return selectedVoiceBeforeSave;
+            }
+
+            return null;
+          }
+        );
+
+        console.log(
+          "========== SCENES AFTER SAVE =========="
+        );
+
+        console.table(
+          normalizedSaved.map(
+            (scene, index) => ({
+              scene: index + 1,
+              id: scene.id,
+              duration:
+                scene.duration,
+              transitionType:
+                scene.transitionType,
+              transitionDuration:
+                scene.transitionDuration,
+              motionOverride:
+                scene.motionOverride ??
+                null,
+              audioStartTime:
+                scene.audioStartTime,
+              audioTrimStart:
+                scene.audioTrimStart,
+              audioTrimEnd:
+                scene.audioTrimEnd,
+              audioVolume:
+                scene.audioVolume,
+              audioMuted:
+                scene.audioMuted,
+              hasImage: Boolean(
+                scene.generatedImage
+                  ?.imageUrl
+              ),
+            })
+          )
+        );
+
+        console.log(
+          "======================================="
+        );
       } catch (error) {
-        console.error("Failed to save timeline:", error);
+        console.error(
+          "Failed to save timeline:",
+          error
+        );
+
         throw error;
       } finally {
         setSaving(false);
@@ -1023,12 +1433,9 @@ const selectVoiceClip = useCallback(
       videoId,
       normalizeScenes,
       selectedSceneId,
+      selectedVoiceSceneId,
     ]
   );
-
-  // =====================================================
-  // HISTORY
-  // =====================================================
 
   const saveHistory = useCallback(
     (snapshot?: Scene[]) => {
@@ -1048,191 +1455,226 @@ const selectVoiceClip = useCallback(
     [cloneScenes]
   );
 
-  // =====================================================
-  // ADD SCENE — STAGE 2B.1
-  // =====================================================
+  const handleAddScene =
+    useCallback(() => {
+      const currentScenes =
+        scenesRef.current;
 
-  const handleAddScene = useCallback(() => {
-    const currentScenes = scenesRef.current;
+      if (
+        loading ||
+        saving ||
+        trimming !== null ||
+        voiceEditing !== null ||
+        draggedId !== null
+      ) {
+        return;
+      }
 
-    if (
-      loading ||
-      saving ||
-      trimming !== null ||
-      draggedId !== null
-    ) {
-      return;
-    }
+      const insertAfterIndex =
+        selectedSceneId
+          ? currentScenes.findIndex(
+              (scene) =>
+                scene.id ===
+                selectedSceneId
+            )
+          : currentScenes.length - 1;
 
-    const insertAfterIndex =
-      selectedSceneId
-        ? currentScenes.findIndex(
-            (scene) => scene.id === selectedSceneId
+      const safeInsertIndex =
+        insertAfterIndex >= 0
+          ? insertAfterIndex + 1
+          : currentScenes.length;
+
+      const previousScene =
+        currentScenes[
+          safeInsertIndex - 1
+        ] ??
+        currentScenes[0] ??
+        null;
+
+      const newScene: Scene = {
+        id: `temp-${crypto.randomUUID()}`,
+        order: safeInsertIndex,
+
+        text:
+          previousScene?.text?.trim() ||
+          "Continue the video with a natural next scene.",
+
+        imagePrompt:
+          previousScene?.imagePrompt?.trim() ||
+          "A cinematic continuation matching the previous scene, consistent characters, setting, lighting, and visual style.",
+
+        duration:
+          NEW_SCENE_DURATION,
+
+        transitionType: "fade",
+
+        transitionDuration:
+          TRANSITION_DURATION,
+
+        motionOverride: null,
+
+        label: "New Scene",
+
+        generatedImage:
+          previousScene?.generatedImage ??
+          null,
+
+        sourceSceneId:
+          previousScene &&
+          !isTemporaryScene(
+            previousScene.id
           )
-        : currentScenes.length - 1;
+            ? previousScene.id
+            : undefined,
 
-    const safeInsertIndex =
-      insertAfterIndex >= 0
-        ? insertAfterIndex + 1
-        : currentScenes.length;
+        audioUrl: null,
+        audioDuration: null,
+        audioStartTime: null,
+        audioTrimStart: 0,
+        audioTrimEnd: 0,
+        audioVolume: 1,
+        audioMuted: false,
+      };
 
-    const previousScene =
-      currentScenes[safeInsertIndex - 1] ??
-      currentScenes[0] ??
-      null;
+      saveHistory(currentScenes);
 
-    const newScene: Scene = {
-      id: `temp-${crypto.randomUUID()}`,
-      order: safeInsertIndex,
-      text:
-        previousScene?.text?.trim() ||
-        "Continue the video with a natural next scene.",
-      imagePrompt:
-        previousScene?.imagePrompt?.trim() ||
-        "A cinematic continuation matching the previous scene, consistent characters, setting, lighting, and visual style.",
-      duration: NEW_SCENE_DURATION,
-      transitionType: "fade",
-      transitionDuration: TRANSITION_DURATION,
-      motionOverride: null,
-      label: "New Scene",
-      generatedImage: previousScene?.generatedImage ?? null,
-      sourceSceneId:
-        previousScene && !isTemporaryScene(previousScene.id)
-          ? previousScene.id
-          : undefined,
-    };
+      const updated =
+        normalizeScenes([
+          ...currentScenes.slice(
+            0,
+            safeInsertIndex
+          ),
+          newScene,
+          ...currentScenes.slice(
+            safeInsertIndex
+          ),
+        ]);
 
-    saveHistory(currentScenes);
+      scenesRef.current =
+        updated;
 
-    const updated = normalizeScenes([
-      ...currentScenes.slice(0, safeInsertIndex),
-      newScene,
-      ...currentScenes.slice(safeInsertIndex),
+      setScenes(updated);
+      setSelectedSceneId(
+        newScene.id
+      );
+      setSelectedVoiceSceneId(
+        null
+      );
+      setTransitionEditorId(null);
+    }, [
+      loading,
+      saving,
+      trimming,
+      voiceEditing,
+      draggedId,
+      selectedSceneId,
+      saveHistory,
+      normalizeScenes,
+      isTemporaryScene,
     ]);
 
-    scenesRef.current = updated;
-    setScenes(updated);
-    setSelectedSceneId(newScene.id);
-    setTransitionEditorId(null);
+  const updateTransition =
+    useCallback(
+      async (
+        sceneId: string,
+        changes: {
+          transitionType?: Scene["transitionType"];
+          transitionDuration?: number;
+        }
+      ) => {
+        const currentScenes =
+          scenesRef.current;
 
-    console.log("========== ADD SCENE ==========");
-    console.log("Inserted index:", safeInsertIndex);
-    console.log("Temporary ID:", newScene.id);
-    console.log("Source scene:", newScene.sourceSceneId ?? "none");
-    console.log("Scene count:", updated.length);
-    console.log("New scene is ready for Stage 2B.2 persistence.");
-    console.log("================================");
-  }, [
-    loading,
-    saving,
-    trimming,
-    draggedId,
-    selectedSceneId,
-    saveHistory,
-    normalizeScenes,
-    isTemporaryScene,
-  ]);
+        const updated =
+          currentScenes.map(
+            (item) =>
+              item.id === sceneId
+                ? {
+                    ...item,
+                    ...changes,
+                  }
+                : item
+          );
 
-  // =====================================================
-  // TRANSITION
-  // =====================================================
-
-  const updateTransition = useCallback(
-    async (
-      sceneId: string,
-      changes: {
-        transitionType?: Scene["transitionType"];
-        transitionDuration?: number;
-      }
-    ) => {
-      const currentScenes =
-        scenesRef.current;
-
-      const updated =
-        currentScenes.map((item) =>
-          item.id === sceneId
-            ? {
-                ...item,
-                ...changes,
-              }
-            : item
+        saveHistory(
+          currentScenes
         );
 
-      saveHistory(currentScenes);
+        scenesRef.current =
+          updated;
 
-      scenesRef.current =
-        updated;
+        setScenes(updated);
 
-      setScenes(updated);
+        await persistScenes(
+          updated
+        );
+      },
+      [
+        persistScenes,
+        saveHistory,
+      ]
+    );
 
-      await persistScenes(updated);
-    },
-    [
-      persistScenes,
-      saveHistory,
-    ]
-  );
+  const updateSceneDetails =
+    useCallback(
+      async (
+        sceneId: string,
+        changes: {
+          text: string;
+          imagePrompt: string;
+          duration: number;
+          transitionType:
+            | "fade"
+            | "slide"
+            | "zoom"
+            | "none";
+          transitionDuration: number;
+          motionOverride:
+            MotionOverride | null;
+        }
+      ) => {
+        const currentScenes =
+          scenesRef.current;
 
-  // =====================================================
-  // UPDATE SCENE DETAILS
-  // =====================================================
+        const updated =
+          currentScenes.map(
+            (scene) =>
+              scene.id === sceneId
+                ? {
+                    ...scene,
+                    ...changes,
+                  }
+                : scene
+          );
 
-  const updateSceneDetails = useCallback(
-    async (
-      sceneId: string,
-      changes: {
-        text: string;
-        imagePrompt: string;
-        duration: number;
-        transitionType:
-          | "fade"
-          | "slide"
-          | "zoom"
-          | "none";
-        transitionDuration: number;
-        motionOverride: MotionOverride | null;
-      }
-    ) => {
-      const currentScenes =
-        scenesRef.current;
-
-      const updated =
-        currentScenes.map((scene) =>
-          scene.id === sceneId
-            ? {
-                ...scene,
-                ...changes,
-              }
-            : scene
+        saveHistory(
+          currentScenes
         );
 
-      saveHistory(currentScenes);
+        scenesRef.current =
+          updated;
 
-      scenesRef.current =
-        updated;
+        setScenes(updated);
 
-      setScenes(updated);
+        setSelectedSceneId(
+          sceneId
+        );
 
-      setSelectedSceneId(
-        sceneId
-      );
-
-      await persistScenes(updated);
-    },
-    [
-      persistScenes,
-      saveHistory,
-    ]
-  );
-
-  // =====================================================
-  // UNDO
-  // =====================================================
+        await persistScenes(
+          updated
+        );
+      },
+      [
+        persistScenes,
+        saveHistory,
+      ]
+    );
 
   const handleUndo = async () => {
     if (
       history.length === 0 ||
       trimming !== null ||
+      voiceEditing !== null ||
       saving ||
       loading ||
       draggedId !== null
@@ -1254,7 +1696,9 @@ const selectVoiceClip = useCallback(
     ]);
 
     const restoredScenes =
-      cloneScenes(previousScenes);
+      cloneScenes(
+        previousScenes
+      );
 
     scenesRef.current =
       restoredScenes;
@@ -1277,19 +1721,28 @@ const selectVoiceClip = useCallback(
             null
     );
 
+    setSelectedVoiceSceneId(
+      (currentSelectedId) =>
+        restoredScenes.some(
+          (scene) =>
+            scene.id ===
+              currentSelectedId &&
+            Boolean(scene.audioUrl)
+        )
+          ? currentSelectedId
+          : null
+    );
+
     await persistScenes(
       restoredScenes
     );
   };
 
-  // =====================================================
-  // REDO
-  // =====================================================
-
   const handleRedo = async () => {
     if (
       redoStack.length === 0 ||
       trimming !== null ||
+      voiceEditing !== null ||
       saving ||
       loading ||
       draggedId !== null
@@ -1334,35 +1787,41 @@ const selectVoiceClip = useCallback(
             null
     );
 
+    setSelectedVoiceSceneId(
+      (currentSelectedId) =>
+        restoredScenes.some(
+          (scene) =>
+            scene.id ===
+              currentSelectedId &&
+            Boolean(scene.audioUrl)
+        )
+          ? currentSelectedId
+          : null
+    );
+
     await persistScenes(
       restoredScenes
     );
   };
 
-  // =====================================================
-  // SEEK TO TIME
-  // =====================================================
+  const seekToTime =
+    useCallback(
+      (time: number) => {
+        if (!onSeek) return;
 
-  const seekToTime = useCallback(
-    (time: number) => {
-      if (!onSeek) return;
+        const safeTime =
+          Math.max(
+            0,
+            Math.min(
+              totalDuration,
+              time
+            )
+          );
 
-      const safeTime = Math.max(
-        0,
-        Math.min(
-          totalDuration,
-          time
-        )
-      );
-
-      onSeek(safeTime);
-    },
-    [onSeek, totalDuration]
-  );
-
-  // =====================================================
-  // SEEK BY TIMELINE CLICK
-  // =====================================================
+        onSeek(safeTime);
+      },
+      [onSeek, totalDuration]
+    );
 
   const handleSeek = (
     e: React.MouseEvent<HTMLDivElement>
@@ -1384,16 +1843,12 @@ const selectVoiceClip = useCallback(
       rect.width;
 
     setSelectedSceneId(null);
-setSelectedVoiceSceneId(null);
+    setSelectedVoiceSceneId(null);
 
     seekToTime(
       position * totalDuration
     );
   };
-
-  // =====================================================
-  // CLICK INDIVIDUAL SCENE
-  // =====================================================
 
   const handleSceneClick = (
     e: React.MouseEvent,
@@ -1442,19 +1897,13 @@ setSelectedVoiceSceneId(null);
     }
   };
 
-  // =====================================================
-  // REORDER
-  // =====================================================
-
-  const suppressClickRef =
-    useRef(false);
-
   const handleDragStart = (
     e: React.DragEvent<HTMLDivElement>,
     id: string
   ) => {
     if (
       trimming !== null ||
+      voiceEditing !== null ||
       saving ||
       loading
     ) {
@@ -1465,6 +1914,7 @@ setSelectedVoiceSceneId(null);
     setDraggedId(id);
     setDropTargetId(null);
     setSelectedSceneId(id);
+    setSelectedVoiceSceneId(null);
     suppressClickRef.current = true;
 
     e.dataTransfer.effectAllowed =
@@ -1487,6 +1937,7 @@ setSelectedVoiceSceneId(null);
       draggedId === null ||
       draggedId === targetId ||
       trimming !== null ||
+      voiceEditing !== null ||
       saving ||
       loading
     ) {
@@ -1525,6 +1976,7 @@ setSelectedVoiceSceneId(null);
       sourceId === null ||
       sourceId === targetId ||
       trimming !== null ||
+      voiceEditing !== null ||
       saving ||
       loading
     ) {
@@ -1606,6 +2058,18 @@ setSelectedVoiceSceneId(null);
       draggedScene.id
     );
 
+    setSelectedVoiceSceneId(
+      (currentSelectedVoiceId) =>
+        normalized.some(
+          (scene) =>
+            scene.id ===
+              currentSelectedVoiceId &&
+            Boolean(scene.audioUrl)
+        )
+          ? currentSelectedVoiceId
+          : null
+    );
+
     suppressClickRef.current =
       true;
 
@@ -1627,10 +2091,6 @@ setSelectedVoiceSceneId(null);
     }
   };
 
-  // =====================================================
-  // SPLIT
-  // =====================================================
-
   const handleSplit = async (
     id: string
   ) => {
@@ -1646,6 +2106,7 @@ setSelectedVoiceSceneId(null);
       !scene ||
       scene.duration < 2 ||
       trimming !== null ||
+      voiceEditing !== null ||
       saving
     ) {
       return;
@@ -1692,6 +2153,27 @@ setSelectedVoiceSceneId(null);
       generatedImage:
         scene.generatedImage ?? null,
 
+      audioUrl:
+        scene.audioUrl ?? null,
+
+      audioDuration:
+        scene.audioDuration ?? null,
+
+      audioStartTime:
+        scene.audioStartTime ?? null,
+
+      audioTrimStart:
+        scene.audioTrimStart ?? 0,
+
+      audioTrimEnd:
+        scene.audioTrimEnd ?? 0,
+
+      audioVolume:
+        scene.audioVolume ?? 1,
+
+      audioMuted:
+        scene.audioMuted ?? false,
+
       sourceSceneId: scene.id,
     };
 
@@ -1720,6 +2202,27 @@ setSelectedVoiceSceneId(null);
       generatedImage:
         scene.generatedImage ?? null,
 
+      audioUrl:
+        scene.audioUrl ?? null,
+
+      audioDuration:
+        scene.audioDuration ?? null,
+
+      audioStartTime:
+        scene.audioStartTime ?? null,
+
+      audioTrimStart:
+        scene.audioTrimStart ?? 0,
+
+      audioTrimEnd:
+        scene.audioTrimEnd ?? 0,
+
+      audioVolume:
+        scene.audioVolume ?? 1,
+
+      audioMuted:
+        scene.audioMuted ?? false,
+
       sourceSceneId: scene.id,
     };
 
@@ -1747,14 +2250,16 @@ setSelectedVoiceSceneId(null);
       firstScene.id
     );
 
+    setSelectedVoiceSceneId(
+      firstScene.audioUrl
+        ? firstScene.id
+        : null
+    );
+
     await persistScenes(
       normalized
     );
   };
-
-  // =====================================================
-  // DELETE
-  // =====================================================
 
   const handleDelete = async (
     id: string
@@ -1772,6 +2277,7 @@ setSelectedVoiceSceneId(null);
       deletedIndex === -1 ||
       currentScenes.length <= 1 ||
       trimming !== null ||
+      voiceEditing !== null ||
       saving
     ) {
       return;
@@ -1792,6 +2298,15 @@ setSelectedVoiceSceneId(null);
       normalized;
 
     setScenes(normalized);
+
+    if (
+      selectedVoiceSceneId ===
+      id
+    ) {
+      setSelectedVoiceSceneId(
+        null
+      );
+    }
 
     if (normalized.length === 0) {
       setSelectedSceneId(null);
@@ -1822,10 +2337,6 @@ setSelectedVoiceSceneId(null);
     }
   };
 
-  // =====================================================
-  // TRIM CLEANUP
-  // =====================================================
-
   const cleanupTrimListeners =
     useCallback(() => {
       const listeners =
@@ -1849,20 +2360,42 @@ setSelectedVoiceSceneId(null);
         null;
     }, []);
 
-  // =====================================================
-  // CLEAN UP ON UNMOUNT
-  // =====================================================
+  const cleanupVoiceEditListeners =
+    useCallback(() => {
+      const listeners =
+        voiceEditListenersRef.current;
+
+      if (!listeners) {
+        return;
+      }
+
+      window.removeEventListener(
+        "mousemove",
+        listeners.handleMouseMove
+      );
+
+      window.removeEventListener(
+        "mouseup",
+        listeners.handleMouseUp
+      );
+
+      voiceEditListenersRef.current =
+        null;
+    }, []);
 
   useEffect(() => {
     return () => {
       cleanupTrimListeners();
-      trimSessionRef.current = null;
-    };
-  }, [cleanupTrimListeners]);
+      cleanupVoiceEditListeners();
 
-  // =====================================================
-  // TRIM
-  // =====================================================
+      trimSessionRef.current = null;
+      voiceEditSessionRef.current =
+        null;
+    };
+  }, [
+    cleanupTrimListeners,
+    cleanupVoiceEditListeners,
+  ]);
 
   const startTrim = (
     e: React.MouseEvent,
@@ -1874,6 +2407,7 @@ setSelectedVoiceSceneId(null);
 
     if (
       trimming !== null ||
+      voiceEditing !== null ||
       saving ||
       loading
     ) {
@@ -1934,6 +2468,7 @@ setSelectedVoiceSceneId(null);
       trimSession;
 
     setSelectedSceneId(id);
+    setSelectedVoiceSceneId(null);
 
     setTrimming({
       id,
@@ -2085,11 +2620,624 @@ setSelectedVoiceSceneId(null);
     );
   };
 
-  // =====================================================
-  // RENDER
-  // =====================================================
+  const startVoiceEdit = (
+    e: React.MouseEvent,
+    id: string,
+    type: "move" | "trim",
+    side?: "left" | "right"
+  ) => {
+    e.preventDefault();
+    e.stopPropagation();
 
-  let elapsed = 0;
+    if (
+      trimming !== null ||
+      voiceEditing !== null ||
+      saving ||
+      loading
+    ) {
+      return;
+    }
+
+    const currentScenes =
+      scenesRef.current;
+
+    const scene =
+      currentScenes.find(
+        (item) => item.id === id
+      );
+
+    if (
+      !scene ||
+      !scene.audioUrl
+    ) {
+      return;
+    }
+
+    const container =
+      e.currentTarget.closest(
+        "[data-voice-track]"
+      ) as HTMLElement | null;
+
+    if (!container) {
+      return;
+    }
+
+    const rect =
+      container.getBoundingClientRect();
+
+    if (
+      rect.width <= 0 ||
+      totalDuration <= 0
+    ) {
+      return;
+    }
+
+    cleanupVoiceEditListeners();
+
+    const {
+      trimStart,
+      trimEnd,
+    } = getVoiceTrimValues(scene);
+
+    const originalScenes =
+      cloneScenes(currentScenes);
+
+    const originalStart =
+      getVoiceStart(
+        scene,
+        currentScenes
+      );
+
+    voiceEditSessionRef.current = {
+      id,
+      type,
+      side,
+      startX: e.clientX,
+      timelineWidth: rect.width,
+      timelineDuration:
+        totalDuration,
+      originalStart,
+      originalTrimStart:
+        trimStart,
+      originalTrimEnd:
+        trimEnd,
+      originalScenes,
+    };
+
+    setSelectedVoiceSceneId(id);
+    setSelectedSceneId(id);
+
+    setVoiceEditing({
+      id,
+      type,
+      side,
+    });
+
+    suppressVoiceClickRef.current =
+      true;
+
+    const handleMouseMove = (
+      moveEvent: MouseEvent
+    ) => {
+      const session =
+        voiceEditSessionRef.current;
+
+      if (!session) {
+        return;
+      }
+
+      const deltaPixels =
+        moveEvent.clientX -
+        session.startX;
+
+      const deltaSeconds =
+        (deltaPixels /
+          session.timelineWidth) *
+        session.timelineDuration;
+
+      const current =
+        scenesRef.current;
+
+      const targetScene =
+        current.find(
+          (item) =>
+            item.id === session.id
+        );
+
+      if (!targetScene) {
+        return;
+      }
+
+      const {
+        audioDuration,
+      } =
+        getVoiceTrimValues(
+          targetScene
+        );
+
+      let nextStart =
+        session.originalStart;
+
+      let nextTrimStart =
+        session.originalTrimStart;
+
+      let nextTrimEnd =
+        session.originalTrimEnd;
+
+      if (
+        session.type === "move"
+      ) {
+        const {
+          effectiveDuration,
+        } =
+          getVoiceTrimValues(
+            targetScene
+          );
+
+        const maxStart =
+          Math.max(
+            0,
+            totalDuration -
+              effectiveDuration
+          );
+
+        nextStart = Math.min(
+          maxStart,
+          Math.max(
+            0,
+            session.originalStart +
+              deltaSeconds
+          )
+        );
+      } else if (
+        session.side === "left"
+      ) {
+        const maxTrimStart =
+          Math.max(
+            0,
+            audioDuration -
+              session.originalTrimEnd -
+              MIN_VOICE_DURATION
+          );
+
+        nextTrimStart =
+          Math.min(
+            maxTrimStart,
+            Math.max(
+              0,
+              session.originalTrimStart +
+                deltaSeconds
+            )
+          );
+
+        nextStart =
+          session.originalStart +
+          (nextTrimStart -
+            session.originalTrimStart);
+
+        const {
+          effectiveDuration,
+        } =
+          getVoiceTrimValues({
+            ...targetScene,
+            audioTrimStart:
+              nextTrimStart,
+          });
+
+        if (
+          nextStart +
+            effectiveDuration >
+          totalDuration
+        ) {
+          nextStart =
+            Math.max(
+              0,
+              totalDuration -
+                effectiveDuration
+            );
+        }
+      } else {
+        const maxTrimEnd =
+          Math.max(
+            0,
+            audioDuration -
+              session.originalTrimStart -
+              MIN_VOICE_DURATION
+          );
+
+        nextTrimEnd =
+          Math.min(
+            maxTrimEnd,
+            Math.max(
+              0,
+              session.originalTrimEnd -
+                deltaSeconds
+            )
+          );
+      }
+
+      nextStart =
+        Math.round(
+          nextStart * 1000
+        ) / 1000;
+
+      nextTrimStart =
+        Math.round(
+          nextTrimStart * 1000
+        ) / 1000;
+
+      nextTrimEnd =
+        Math.round(
+          nextTrimEnd * 1000
+        ) / 1000;
+
+      const updated =
+        current.map((item) =>
+          item.id === session.id
+            ? {
+                ...item,
+                audioStartTime:
+                  nextStart,
+                audioTrimStart:
+                  nextTrimStart,
+                audioTrimEnd:
+                  nextTrimEnd,
+              }
+            : item
+        );
+
+      scenesRef.current =
+        updated;
+
+      setScenes(updated);
+    };
+
+    const handleMouseUp =
+      async () => {
+        const session =
+          voiceEditSessionRef.current;
+
+        cleanupVoiceEditListeners();
+
+        voiceEditSessionRef.current =
+          null;
+
+        setVoiceEditing(null);
+
+        if (!session) {
+          return;
+        }
+
+        const finalScenes =
+          cloneScenes(
+            scenesRef.current
+          );
+
+        const finalScene =
+          finalScenes.find(
+            (item) =>
+              item.id ===
+              session.id
+          );
+
+        if (!finalScene) {
+          return;
+        }
+
+        const startChanged =
+          Math.abs(
+            (finalScene.audioStartTime ??
+              0) -
+              session.originalStart
+          ) > 0.001;
+
+        const trimStartChanged =
+          Math.abs(
+            (finalScene.audioTrimStart ??
+              0) -
+              session.originalTrimStart
+          ) > 0.001;
+
+        const trimEndChanged =
+          Math.abs(
+            (finalScene.audioTrimEnd ??
+              0) -
+              session.originalTrimEnd
+          ) > 0.001;
+
+        if (
+          startChanged ||
+          trimStartChanged ||
+          trimEndChanged
+        ) {
+          saveHistory(
+            session.originalScenes
+          );
+        }
+
+        const hasTemporaryScene =
+          finalScenes.some(
+            (scene) =>
+              isTemporaryScene(
+                scene.id
+              )
+          );
+
+        if (!hasTemporaryScene) {
+          await persistScenes(
+            finalScenes
+          );
+        }
+
+        window.setTimeout(() => {
+          suppressVoiceClickRef.current =
+            false;
+        }, 0);
+      };
+
+    voiceEditListenersRef.current = {
+      handleMouseMove,
+      handleMouseUp,
+    };
+
+    window.addEventListener(
+      "mousemove",
+      handleMouseMove
+    );
+
+    window.addEventListener(
+      "mouseup",
+      handleMouseUp
+    );
+  };
+
+  const updateVoiceVolume =
+    useCallback(
+      (
+        sceneId: string,
+        volume: number
+      ) => {
+        const safeVolume =
+          Math.min(
+            MAX_VOICE_VOLUME,
+            Math.max(
+              MIN_VOICE_VOLUME,
+              Number.isFinite(volume)
+                ? volume
+                : 1
+            )
+          );
+
+        const updated =
+          scenesRef.current.map(
+            (scene) =>
+              scene.id === sceneId
+                ? {
+                    ...scene,
+                    audioVolume:
+                      safeVolume,
+                  }
+                : scene
+          );
+
+        scenesRef.current =
+          updated;
+
+        setScenes(updated);
+      },
+      []
+    );
+
+  const persistVoiceChange =
+    useCallback(
+      async (
+        sceneId: string,
+        previousScenes: Scene[]
+      ) => {
+        const current =
+          scenesRef.current;
+
+        const changedScene =
+          current.find(
+            (scene) =>
+              scene.id === sceneId
+          );
+
+        if (!changedScene) {
+          return;
+        }
+
+        if (
+          isTemporaryScene(
+            changedScene.id
+          )
+        ) {
+          return;
+        }
+
+        saveHistory(
+          previousScenes
+        );
+
+        await persistScenes(
+          current
+        );
+      },
+      [
+        isTemporaryScene,
+        persistScenes,
+        saveHistory,
+      ]
+    );
+
+  const toggleVoiceMute =
+    useCallback(
+      async (sceneId: string) => {
+        if (
+          saving ||
+          loading ||
+          voiceEditing !== null
+        ) {
+          return;
+        }
+
+        const current =
+          scenesRef.current;
+
+        const scene =
+          current.find(
+            (item) =>
+              item.id === sceneId
+          );
+
+        if (
+          !scene ||
+          !scene.audioUrl
+        ) {
+          return;
+        }
+
+        const previous =
+          cloneScenes(current);
+
+        const updated =
+          current.map((item) =>
+            item.id === sceneId
+              ? {
+                  ...item,
+                  audioMuted:
+                    !item.audioMuted,
+                }
+              : item
+          );
+
+        scenesRef.current =
+          updated;
+
+        setScenes(updated);
+
+        if (
+          isTemporaryScene(
+            sceneId
+          )
+        ) {
+          return;
+        }
+
+        saveHistory(previous);
+
+        await persistScenes(
+          updated
+        );
+      },
+      [
+        saving,
+        loading,
+        voiceEditing,
+        cloneScenes,
+        isTemporaryScene,
+        saveHistory,
+        persistScenes,
+      ]
+    );
+
+  const handleVoiceVolumeCommit =
+    useCallback(
+      async (sceneId: string) => {
+        const current =
+          scenesRef.current;
+
+        const scene =
+          current.find(
+            (item) =>
+              item.id === sceneId
+          );
+
+        if (
+          !scene ||
+          !scene.audioUrl ||
+          isTemporaryScene(
+            sceneId
+          )
+        ) {
+          return;
+        }
+
+        const previous =
+          voiceVolumeBeforeChangeRef.current;
+
+        if (!previous) {
+          return;
+        }
+
+        voiceVolumeBeforeChangeRef.current =
+          null;
+
+        const changed =
+          Math.abs(
+            (previous.find(
+              (item) =>
+                item.id === sceneId
+            )?.audioVolume ?? 1) -
+              (scene.audioVolume ?? 1)
+          ) > 0.001;
+
+        if (!changed) {
+          return;
+        }
+
+        saveHistory(previous);
+
+        await persistScenes(
+          current
+        );
+      },
+      [
+        isTemporaryScene,
+        persistScenes,
+        saveHistory,
+      ]
+    );
+
+  const voiceVolumeBeforeChangeRef =
+    useRef<Scene[] | null>(null);
+
+  const handleVoiceVolumeChange =
+    (
+      sceneId: string,
+      value: number
+    ) => {
+      if (
+        saving ||
+        loading ||
+        voiceEditing !== null
+      ) {
+        return;
+      }
+
+      if (
+        !voiceVolumeBeforeChangeRef.current
+      ) {
+        voiceVolumeBeforeChangeRef.current =
+          cloneScenes(
+            scenesRef.current
+          );
+      }
+
+      updateVoiceVolume(
+        sceneId,
+        value
+      );
+    };
+
+  const selectedVoiceScene =
+    selectedVoiceSceneId
+      ? scenes.find(
+          (scene) =>
+            scene.id ===
+            selectedVoiceSceneId
+        ) ?? null
+      : null;
 
   const selectedScene =
     selectedSceneId
@@ -2100,10 +3248,14 @@ setSelectedVoiceSceneId(null);
         ) ?? null
       : null;
 
+  let elapsed = 0;
+
+  function updateScene(id: string, data: { text: string; imagePrompt: string; duration: number; transitionType: "fade" | "slide" | "zoom" | "none"; transitionDuration: number; motionOverride: ("auto" | "static" | "zoomIn" | "zoomOut" | "panLeft" | "panRight" | "panUp" | "panDown" | "dollyIn" | "dollyOut" | "orbit" | "droneUp" | "macroSlide" | "whipPan") | null; }) {
+    throw new Error("Function not implemented.");
+  }
+
   return (
     <div className="mt-6 rounded-xl border border-white/10 bg-white/5 p-4">
-      {/* HEADER */}
-
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <h2 className="text-sm font-semibold text-white">
@@ -2150,6 +3302,7 @@ setSelectedVoiceSceneId(null);
               loading ||
               saving ||
               trimming !== null ||
+              voiceEditing !== null ||
               draggedId !== null
             }
             className="rounded-lg bg-cyan-500 px-3 py-1.5 text-sm font-medium text-black transition hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-30"
@@ -2163,6 +3316,7 @@ setSelectedVoiceSceneId(null);
             disabled={
               history.length === 0 ||
               trimming !== null ||
+              voiceEditing !== null ||
               saving ||
               loading ||
               draggedId !== null
@@ -2178,6 +3332,7 @@ setSelectedVoiceSceneId(null);
             disabled={
               redoStack.length === 0 ||
               trimming !== null ||
+              voiceEditing !== null ||
               saving ||
               loading ||
               draggedId !== null
@@ -2217,8 +3372,6 @@ setSelectedVoiceSceneId(null);
         </span>
       </div>
 
-      {/* NEW SCENE NOTICE */}
-
       {selectedScene &&
         isTemporaryScene(
           selectedScene.id
@@ -2232,53 +3385,174 @@ setSelectedVoiceSceneId(null);
 
       {!loading && (
         <div className="mt-4">
-          <SceneInspector
+         <SceneInspector
   videoId={videoId}
   scene={selectedScene}
-            sceneIndex={Math.max(
-              0,
-              scenes.findIndex(
-                (scene) =>
-                  scene.id ===
-                  selectedSceneId
-              )
-            )}
-            disabled={
-              loading ||
-              saving ||
-              trimming !== null ||
-              draggedId !== null
-            }
-            canDelete={
-              scenes.length > 1
-            }
-            onSave={async (changes) => {
-              if (!selectedSceneId) {
-                return;
-              }
+  sceneIndex={
+    selectedScene
+      ? scenes.findIndex(
+          (item) => item.id === selectedScene.id
+        )
+      : -1
+  }
+  disabled={saving}
+  canDelete={scenes.length > 1}
+  onSave={async (data) => {
+    if (!selectedScene) {
+      return;
+    }
 
-              await updateSceneDetails(
-                selectedSceneId,
-                changes
-              );
-            }}
-            onDelete={() => {
-              if (
-                !selectedSceneId ||
-                scenes.length <= 1
-              ) {
-                return;
-              }
+    await updateScene(selectedScene.id, data);
+  }}
+  onDelete={async () => {
+    if (!selectedScene) {
+      return;
+    }
 
-              void handleDelete(
-                selectedSceneId
-              );
-            }}
-          />
+    await handleDelete(selectedScene.id);
+  }}
+  onSceneContentUpdated={(data) => {
+    if (!selectedScene) {
+      return;
+    }
+
+    const updatedScenes = scenesRef.current.map(
+      (scene) =>
+        scene.id === selectedScene.id
+          ? {
+              ...scene,
+              ...(data.generatedImage !== undefined
+                ? {
+                    generatedImage:
+                      data.generatedImage,
+                  }
+                : {}),
+              ...(data.audioUrl !== undefined
+                ? {
+                    audioUrl: data.audioUrl,
+                  }
+                : {}),
+              ...(data.audioDuration !== undefined
+                ? {
+                    audioDuration:
+                      data.audioDuration,
+                  }
+                : {}),
+            }
+          : scene
+    );
+
+    scenesRef.current = updatedScenes;
+    setScenes(updatedScenes);
+  }}
+/>
         </div>
       )}
 
-      {/* TIMELINE */}
+      {selectedVoiceScene && (
+        <div className="mt-3 rounded-xl border border-violet-300/20 bg-violet-500/5 p-3">
+          <div className="mb-3 flex items-center justify-between">
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-violet-200/70">
+                Voice Track Editing
+              </div>
+
+              <div className="mt-1 text-xs text-white/70">
+                {sceneLabel(
+                  selectedVoiceScene,
+                  scenes.findIndex(
+                    (scene) =>
+                      scene.id ===
+                      selectedVoiceScene.id
+                  )
+                )}
+              </div>
+            </div>
+
+            <div className="text-[10px] text-white/40">
+              {formatTime(
+                getVoiceTrimValues(
+                  selectedVoiceScene
+                ).effectiveDuration
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <div className="flex min-w-0 flex-1 items-center gap-3">
+              <span className="shrink-0 text-[10px] text-white/50">
+                Volume
+              </span>
+
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.01"
+                value={
+                  selectedVoiceScene.audioVolume ??
+                  1
+                }
+                onChange={(e) =>
+                  handleVoiceVolumeChange(
+                    selectedVoiceScene.id,
+                    Number(
+                      e.target.value
+                    )
+                  )
+                }
+                onPointerUp={() => {
+                  void handleVoiceVolumeCommit(
+                    selectedVoiceScene.id
+                  );
+                }}
+                disabled={
+                  saving ||
+                  loading ||
+                  voiceEditing !== null
+                }
+                className="h-1.5 min-w-0 flex-1 cursor-pointer accent-violet-400 disabled:cursor-not-allowed disabled:opacity-40"
+              />
+
+              <span className="w-10 text-right text-[10px] text-white/50">
+                {Math.round(
+                  (selectedVoiceScene.audioVolume ??
+                    1) * 100
+                )}
+                %
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={() =>
+                void toggleVoiceMute(
+                  selectedVoiceScene.id
+                )
+              }
+              disabled={
+                saving ||
+                loading ||
+                voiceEditing !== null
+              }
+              className={`rounded-lg border px-3 py-1.5 text-[10px] font-medium transition disabled:cursor-not-allowed disabled:opacity-40 ${
+                selectedVoiceScene.audioMuted
+                  ? "border-red-300/40 bg-red-500/20 text-red-200"
+                  : "border-violet-300/20 bg-white/5 text-white/70 hover:bg-white/10"
+              }`}
+            >
+              {selectedVoiceScene.audioMuted
+                ? "🔇 Muted"
+                : "🔊 Mute"}
+            </button>
+          </div>
+
+          <div className="mt-2 text-[9px] text-white/30">
+            Drag the narration block to move it.
+            Drag either edge to trim it.
+          </div>
+        </div>
+      )}
 
       <div
         onClick={handleSeek}
@@ -2297,11 +3571,7 @@ setSelectedVoiceSceneId(null);
             </div>
           )}
 
-        {/* SCENES + TRANSITIONS */}
-
         <div className="absolute inset-x-0 top-3 z-0 h-16">
-          {/* SCENE TRACK */}
-
           <div className="absolute inset-0 flex h-16">
             {scenes.map(
               (scene, index) => {
@@ -2369,6 +3639,7 @@ setSelectedVoiceSceneId(null);
                     }
                     draggable={
                       !trimming &&
+                      !voiceEditing &&
                       !saving &&
                       !loading
                     }
@@ -2465,8 +3736,6 @@ setSelectedVoiceSceneId(null);
                       }`}
                     />
 
-                    {/* LEFT TRIM */}
-
                     <div
                       onMouseDown={(e) =>
                         startTrim(
@@ -2482,8 +3751,6 @@ setSelectedVoiceSceneId(null);
                     {isSelected && (
                       <div className="pointer-events-none absolute inset-0 z-10 border-2 border-cyan-300" />
                     )}
-
-                    {/* HEADER */}
 
                     <div className="relative z-10 flex items-center justify-between pl-2">
                       <div className="flex min-w-0 items-center gap-1">
@@ -2502,8 +3769,6 @@ setSelectedVoiceSceneId(null);
                       </div>
 
                       <div className="flex items-center gap-1">
-                        {/* SPLIT */}
-
                         <button
                           type="button"
                           onClick={(e) => {
@@ -2519,6 +3784,7 @@ setSelectedVoiceSceneId(null);
                           }}
                           disabled={
                             trimming !== null ||
+                            voiceEditing !== null ||
                             saving ||
                             loading ||
                             scene.duration < 2
@@ -2536,8 +3802,6 @@ setSelectedVoiceSceneId(null);
                           Split
                         </button>
 
-                        {/* DELETE */}
-
                         <button
                           type="button"
                           onClick={(e) => {
@@ -2549,6 +3813,7 @@ setSelectedVoiceSceneId(null);
                           }}
                           disabled={
                             trimming !== null ||
+                            voiceEditing !== null ||
                             saving ||
                             loading ||
                             scenes.length <= 1
@@ -2566,15 +3831,11 @@ setSelectedVoiceSceneId(null);
                           ✕
                         </button>
 
-                        {/* DRAG HANDLE */}
-
                         <span className="cursor-grab text-white/70">
                           ⋮⋮
                         </span>
                       </div>
                     </div>
-
-                    {/* TIME */}
 
                     <div className="relative z-10 mt-1 pl-2 text-[10px] text-white/80">
                       {formatTime(start)} -{" "}
@@ -2584,8 +3845,6 @@ setSelectedVoiceSceneId(null);
                       )}
                     </div>
 
-                    {/* IMAGE STATUS */}
-
                     <div className="relative z-10 mt-1 truncate pl-2 text-[9px] text-white/60">
                       {scene.generatedImage
                         ? "🎨 Image ready"
@@ -2593,8 +3852,6 @@ setSelectedVoiceSceneId(null);
                           ? "New scene"
                           : "No image"}
                     </div>
-
-                    {/* RIGHT TRIM */}
 
                     <div
                       onMouseDown={(e) =>
@@ -2616,8 +3873,6 @@ setSelectedVoiceSceneId(null);
               }
             )}
           </div>
-
-          {/* TRANSITIONS */}
 
           {!loading &&
             scenes.length > 1 &&
@@ -2710,6 +3965,7 @@ setSelectedVoiceSceneId(null);
                           }}
                           disabled={
                             trimming !== null ||
+                            voiceEditing !== null ||
                             saving ||
                             loading
                           }
@@ -2724,7 +3980,9 @@ setSelectedVoiceSceneId(null);
                               ? 0
                               : scene.transitionDuration ??
                                 TRANSITION_DURATION
-                          ).toFixed(1)}
+                          ).toFixed(
+                            1
+                          )}
                           s
                         </button>
 
@@ -2738,8 +3996,6 @@ setSelectedVoiceSceneId(null);
                             <div className="mb-3 text-[10px] font-semibold uppercase tracking-wide text-white/50">
                               Transition
                             </div>
-
-                            {/* VISUAL TRANSITION PREVIEW */}
 
                             {(() => {
                               const nextScene =
@@ -2928,8 +4184,6 @@ setSelectedVoiceSceneId(null);
                               );
                             })()}
 
-                            {/* TYPE */}
-
                             <label className="mb-1 block text-[10px] text-white/50">
                               Type
                             </label>
@@ -2955,21 +4209,16 @@ setSelectedVoiceSceneId(null);
                               <option value="fade">
                                 Fade
                               </option>
-
                               <option value="slide">
                                 Slide
                               </option>
-
                               <option value="zoom">
                                 Zoom
                               </option>
-
                               <option value="none">
                                 None
                               </option>
                             </select>
-
-                            {/* DURATION */}
 
                             <label className="mb-1 block text-[10px] text-white/50">
                               Duration
@@ -3005,23 +4254,18 @@ setSelectedVoiceSceneId(null);
                               <option value="0">
                                 0.0s
                               </option>
-
                               <option value="0.4">
                                 0.4s
                               </option>
-
                               <option value="0.6">
                                 0.6s
                               </option>
-
                               <option value="0.8">
                                 0.8s
                               </option>
-
                               <option value="1">
                                 1.0s
                               </option>
-
                               <option value="1.2">
                                 1.2s
                               </option>
@@ -3033,11 +4277,9 @@ setSelectedVoiceSceneId(null);
                                 index
                               )}{" "}
                               →{" "}
-                              {sceneLabel(
-                                scenes[
-                                  index + 1
-                                ],
-                                index + 1
+                              {nextSceneLabel(
+                                scenes,
+                                index
                               )}
                             </div>
                           </div>
@@ -3050,100 +4292,187 @@ setSelectedVoiceSceneId(null);
             )}
         </div>
 
-        {/* VOICE TRACK */}
-
-<div
-  className="absolute inset-x-0 top-20 h-10 border-t border-white/5 bg-black/20"
-  onClick={(e) => e.stopPropagation()}
->
-  <div className="absolute left-2 top-1 z-10 text-[10px] font-medium uppercase tracking-wide text-white/40">
-    Voice Track
-  </div>
-
-  {(() => {
-    let voiceElapsed = 0;
-
-    return scenes.map((scene, index) => {
-      const start = voiceElapsed;
-
-      voiceElapsed += scene.duration;
-
-      if (index < scenes.length - 1) {
-        voiceElapsed -= getTransitionDuration(scene);
-      }
-
-      if (!scene.audioUrl) {
-        return null;
-      }
-
-      const duration =
-        typeof scene.audioDuration === "number" &&
-        Number.isFinite(scene.audioDuration)
-          ? Math.max(0, scene.audioDuration)
-          : Math.max(0, scene.duration);
-
-      const voiceWidth =
-        totalDuration > 0
-          ? (duration / totalDuration) * 100
-          : 0;
-
-      const voiceLeft =
-        totalDuration > 0
-          ? (start / totalDuration) * 100
-          : 0;
-
-      const isSelected =
-        selectedVoiceSceneId === scene.id;
-
-      return (
         <div
-          key={`voice-${scene.id}`}
-          onClick={() => {
-            selectVoiceClip(scene.id);
-            setSelectedSceneId(scene.id);
+          data-voice-track
+          className="absolute inset-x-0 top-20 h-10 border-t border-white/5 bg-black/20"
+          onClick={(e) => {
+            e.stopPropagation();
+
+            if (
+              suppressVoiceClickRef.current
+            ) {
+              return;
+            }
+
+            setSelectedVoiceSceneId(
+              null
+            );
           }}
-          className={`absolute top-1 h-8 cursor-pointer overflow-hidden rounded border px-2 py-1 text-[9px] shadow-sm transition ${
-            isSelected
-              ? "border-violet-300 bg-violet-500/50 text-white ring-2 ring-inset ring-violet-200"
-              : "border-violet-300/30 bg-violet-500/25 text-violet-100 hover:bg-violet-500/40"
-          }`}
-          style={{
-            left: `${voiceLeft}%`,
-            width: `${voiceWidth}%`,
-          }}
-          title={`${sceneLabel(
-            scene,
-            index
-          )} narration · ${formatTime(duration)}${
-            isSelected ? " · Selected" : ""
-          }`}
         >
-          <div className="flex min-w-0 items-center gap-1">
-            <span className="shrink-0">
-              🎙️
-            </span>
-
-            <span className="truncate font-medium">
-              Narration {index + 1}
-            </span>
-
-            {isSelected && (
-              <span className="shrink-0 text-violet-200">
-                ✓
-              </span>
-            )}
+          <div className="absolute left-2 top-1 z-10 text-[10px] font-medium uppercase tracking-wide text-white/40">
+            Voice Track
           </div>
-        </div>
-      );
-    });
-  })()}
-</div>
 
-        {/* TRACK */}
+          {scenes.map(
+            (scene, index) => {
+              if (!scene.audioUrl) {
+                return null;
+              }
+
+              const {
+                effectiveDuration,
+                trimStart,
+                trimEnd,
+              } =
+                getVoiceTrimValues(
+                  scene
+                );
+
+              const voiceStart =
+                getVoiceStart(
+                  scene
+                );
+
+              const voiceWidth =
+                totalDuration > 0
+                  ? (effectiveDuration /
+                      totalDuration) *
+                    100
+                  : 0;
+
+              const voiceLeft =
+                totalDuration > 0
+                  ? (voiceStart /
+                      totalDuration) *
+                    100
+                  : 0;
+
+              const isSelected =
+                selectedVoiceSceneId ===
+                scene.id;
+
+              const isVoiceEditing =
+                voiceEditing?.id ===
+                scene.id;
+
+              return (
+                <div
+                  key={`voice-${scene.id}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+
+                    if (
+                      suppressVoiceClickRef.current
+                    ) {
+                      return;
+                    }
+
+                    selectVoiceClip(
+                      scene.id
+                    );
+                  }}
+                  className={`absolute top-1 h-8 cursor-grab overflow-hidden rounded border px-2 py-1 text-[9px] shadow-sm transition ${
+                    isSelected
+                      ? "border-violet-300 bg-violet-500/50 text-white ring-2 ring-inset ring-violet-200"
+                      : "border-violet-300/30 bg-violet-500/25 text-violet-100 hover:bg-violet-500/40"
+                  } ${
+                    isVoiceEditing
+                      ? "cursor-ew-resize"
+                      : ""
+                  } ${
+                    scene.audioMuted
+                      ? "opacity-60"
+                      : ""
+                  }`}
+                  style={{
+                    left: `${voiceLeft}%`,
+                    width: `${Math.max(
+                      voiceWidth,
+                      1
+                    )}%`,
+                  }}
+                  title={`${sceneLabel(
+                    scene,
+                    index
+                  )} narration · ${formatTime(
+                    effectiveDuration
+                  )}${
+                    isSelected
+                      ? " · Selected"
+                      : ""
+                  }`}
+                >
+                  {isSelected && (
+                    <div
+                      onMouseDown={(e) =>
+                        startVoiceEdit(
+                          e,
+                          scene.id,
+                          "trim",
+                          "left"
+                        )
+                      }
+                      className="absolute left-0 top-0 z-30 h-full w-2 cursor-ew-resize bg-violet-200 opacity-90 hover:bg-white"
+                      title={`Trim narration start · ${formatTime(
+                        trimStart
+                      )} trimmed`}
+                    />
+                  )}
+
+                  {isSelected && (
+                    <div
+                      onMouseDown={(e) =>
+                        startVoiceEdit(
+                          e,
+                          scene.id,
+                          "trim",
+                          "right"
+                        )
+                      }
+                      className="absolute right-0 top-0 z-30 h-full w-2 cursor-ew-resize bg-violet-200 opacity-90 hover:bg-white"
+                      title={`Trim narration end · ${formatTime(
+                        trimEnd
+                      )} trimmed`}
+                    />
+                  )}
+
+                  <div
+                    onMouseDown={(e) =>
+                      startVoiceEdit(
+                        e,
+                        scene.id,
+                        "move"
+                      )
+                    }
+                    className="absolute inset-0 z-10 cursor-grab"
+                    title="Drag narration"
+                  />
+
+                  <div className="relative z-20 flex min-w-0 items-center gap-1 pointer-events-none">
+                    <span className="shrink-0">
+                      {scene.audioMuted
+                        ? "🔇"
+                        : "🎙️"}
+                    </span>
+
+                    <span className="truncate font-medium">
+                      Narration{" "}
+                      {index + 1}
+                    </span>
+
+                    {isSelected && (
+                      <span className="shrink-0 text-violet-200">
+                        ✓
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            }
+          )}
+        </div>
 
         <div className="absolute inset-x-0 bottom-7 h-1 bg-cyan-500/20" />
-
-        {/* PLAYHEAD */}
 
         <div
           className="pointer-events-none absolute top-0 z-20 h-full w-0.5 bg-cyan-400"
@@ -3152,13 +4481,9 @@ setSelectedVoiceSceneId(null);
           }}
         />
 
-        {/* CURRENT TIME LABEL */}
-
         <div className="absolute bottom-2 left-2 text-xs text-white/40">
           Video Track · Voice Track
         </div>
-
-        {/* TOTAL DURATION */}
 
         <div className="absolute bottom-2 right-2 text-xs text-white/30">
           {formatTime(totalDuration)}
@@ -3202,4 +4527,22 @@ setSelectedVoiceSceneId(null);
       </div>
     </div>
   );
+}
+
+function nextSceneLabel(
+  scenes: Scene[],
+  index: number
+) {
+  const nextScene =
+    scenes[index + 1];
+
+  if (!nextScene) {
+    return "Next scene";
+  }
+
+  if (nextScene.label?.trim()) {
+    return nextScene.label;
+  }
+
+  return `Scene ${index + 2}`;
 }

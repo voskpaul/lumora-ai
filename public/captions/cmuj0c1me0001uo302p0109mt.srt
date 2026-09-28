@@ -15,7 +15,7 @@ content. Today we're exploring
 best three tools for developers 2026.
 
 5
-00:00:12,660 --> 00:00:15,199
+00:00:12,640 --> 00:00:15,199
 This topic is becoming increasingly important
 
 6
