@@ -473,73 +473,72 @@ export default function Timeline({
       : 0;
 
   useEffect(() => {
-    if (
-      scenes.length === 0 ||
-      totalDuration <= 0
-    ) {
-      return;
-    }
+  if (
+    scenes.length === 0 ||
+    totalDuration <= 0
+  ) {
+    return;
+  }
 
-    let elapsed = 0;
+  let elapsed = 0;
+  let nextSelectedSceneId: string | null = null;
 
-    for (
-      let index = 0;
-      index < scenes.length;
-      index++
-    ) {
-      const scene =
-        scenes[index];
+  for (
+    let index = 0;
+    index < scenes.length;
+    index++
+  ) {
+    const scene = scenes[index];
 
-      const transitionDuration =
-        index < scenes.length - 1
-          ? getTransitionDuration(scene)
-          : 0;
+    const transitionDuration =
+      index < scenes.length - 1
+        ? getTransitionDuration(scene)
+        : 0;
 
-      const sceneStart =
-        elapsed;
+    const sceneStart = elapsed;
 
-      const sceneEnd =
-        elapsed +
-        scene.duration;
+    const sceneEnd =
+      elapsed + scene.duration;
 
-      const effectiveEnd =
-        Math.max(
-          sceneStart,
-          sceneEnd -
-            transitionDuration
-        );
-
-      if (
-        currentTime >= sceneStart &&
-        currentTime < effectiveEnd
-      ) {
-        setSelectedSceneId(
-          scene.id
-        );
-
-        return;
-      }
-
-      elapsed =
-        sceneEnd -
-        transitionDuration;
-    }
-
-    if (
-      currentTime >= totalDuration
-    ) {
-      setSelectedSceneId(
-        scenes[
-          scenes.length - 1
-        ].id
+    const effectiveEnd =
+      Math.max(
+        sceneStart,
+        sceneEnd - transitionDuration
       );
+
+    if (
+      currentTime >= sceneStart &&
+      currentTime < effectiveEnd
+    ) {
+      nextSelectedSceneId = scene.id;
+      break;
     }
-  }, [
-    currentTime,
-    scenes,
-    totalDuration,
-    getTransitionDuration,
-  ]);
+
+    elapsed =
+      sceneEnd - transitionDuration;
+  }
+
+  if (
+    nextSelectedSceneId === null &&
+    currentTime >= totalDuration
+  ) {
+    nextSelectedSceneId =
+      scenes[scenes.length - 1].id;
+  }
+
+  if (nextSelectedSceneId !== null) {
+    setSelectedSceneId((previousId) =>
+      previousId === nextSelectedSceneId
+        ? previousId
+        : nextSelectedSceneId
+    );
+  }
+}, [
+  currentTime,
+  scenes,
+  totalDuration,
+  getTransitionDuration,
+]);
 
   useEffect(() => {
     console.log(
@@ -2626,6 +2625,11 @@ export default function Timeline({
     type: "move" | "trim",
     side?: "left" | "right"
   ) => {
+    console.log("VOICE EDIT MOUSEDOWN:", {
+  id,
+  type,
+  side,
+});
     e.preventDefault();
     e.stopPropagation();
 
@@ -2637,6 +2641,8 @@ export default function Timeline({
     ) {
       return;
     }
+    
+    console.log("VOICE EDIT PASSED GUARD");
 
     const currentScenes =
       scenesRef.current;
@@ -3250,8 +3256,40 @@ export default function Timeline({
 
   let elapsed = 0;
 
-  function updateScene(id: string, data: { text: string; imagePrompt: string; duration: number; transitionType: "fade" | "slide" | "zoom" | "none"; transitionDuration: number; motionOverride: ("auto" | "static" | "zoomIn" | "zoomOut" | "panLeft" | "panRight" | "panUp" | "panDown" | "dollyIn" | "dollyOut" | "orbit" | "droneUp" | "macroSlide" | "whipPan") | null; }) {
-    throw new Error("Function not implemented.");
+  async function updateScene(
+    id: string,
+    data: {
+      text: string;
+      imagePrompt: string;
+      duration: number;
+      transitionType:
+        | "fade"
+        | "slide"
+        | "zoom"
+        | "none";
+      transitionDuration: number;
+      motionOverride:
+        | "auto"
+        | "static"
+        | "zoomIn"
+        | "zoomOut"
+        | "panLeft"
+        | "panRight"
+        | "panUp"
+        | "panDown"
+        | "dollyIn"
+        | "dollyOut"
+        | "orbit"
+        | "droneUp"
+        | "macroSlide"
+        | "whipPan"
+        | null;
+    }
+  ) {
+    await updateSceneDetails(
+      id,
+      data
+    );
   }
 
   return (
@@ -4333,19 +4371,36 @@ export default function Timeline({
                   scene
                 );
 
-              const voiceWidth =
-                totalDuration > 0
-                  ? (effectiveDuration /
-                      totalDuration) *
-                    100
-                  : 0;
+              const visibleVoiceDuration =
+  totalDuration > 0
+    ? Math.min(
+        effectiveDuration,
+        Math.max(
+          0,
+          totalDuration - voiceStart
+        )
+      )
+    : 0;
 
-              const voiceLeft =
-                totalDuration > 0
-                  ? (voiceStart /
-                      totalDuration) *
-                    100
-                  : 0;
+const voiceWidth =
+  totalDuration > 0
+    ? (visibleVoiceDuration /
+        totalDuration) *
+      100
+    : 0;
+
+const voiceLeft =
+  totalDuration > 0
+    ? Math.min(
+        100,
+        Math.max(
+          0,
+          (voiceStart /
+            totalDuration) *
+            100
+        )
+      )
+    : 0;
 
               const isSelected =
                 selectedVoiceSceneId ===
@@ -4385,12 +4440,15 @@ export default function Timeline({
                       : ""
                   }`}
                   style={{
-                    left: `${voiceLeft}%`,
-                    width: `${Math.max(
-                      voiceWidth,
-                      1
-                    )}%`,
-                  }}
+  left: `${voiceLeft}%`,
+  width: `${Math.max(
+    Math.min(
+      voiceWidth,
+      100 - voiceLeft
+    ),
+    1
+  )}%`,
+}}
                   title={`${sceneLabel(
                     scene,
                     index
@@ -4403,48 +4461,36 @@ export default function Timeline({
                   }`}
                 >
                   {isSelected && (
-                    <div
-                      onMouseDown={(e) =>
-                        startVoiceEdit(
-                          e,
-                          scene.id,
-                          "trim",
-                          "left"
-                        )
-                      }
-                      className="absolute left-0 top-0 z-30 h-full w-2 cursor-ew-resize bg-violet-200 opacity-90 hover:bg-white"
-                      title={`Trim narration start · ${formatTime(
-                        trimStart
-                      )} trimmed`}
-                    />
-                  )}
+  <div
+    onMouseDown={(e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      console.log("LEFT HANDLE CLICKED:", scene.id);
+      startVoiceEdit(e, scene.id, "trim", "left");
+    }}
+    className="absolute left-0 top-0 z-[100] h-full w-3 cursor-ew-resize pointer-events-auto bg-violet-200 opacity-90 hover:bg-white"
+    title={`Trim narration start · ${formatTime(trimStart)} trimmed`}
+  />
+)}
 
                   {isSelected && (
-                    <div
-                      onMouseDown={(e) =>
-                        startVoiceEdit(
-                          e,
-                          scene.id,
-                          "trim",
-                          "right"
-                        )
-                      }
-                      className="absolute right-0 top-0 z-30 h-full w-2 cursor-ew-resize bg-violet-200 opacity-90 hover:bg-white"
-                      title={`Trim narration end · ${formatTime(
-                        trimEnd
-                      )} trimmed`}
-                    />
-                  )}
+  <div
+    onMouseDown={(e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      console.log("RIGHT HANDLE CLICKED:", scene.id);
+      startVoiceEdit(e, scene.id, "trim", "right");
+    }}
+    className="absolute right-0 top-0 z-[100] h-full w-3 cursor-ew-resize pointer-events-auto bg-violet-200 opacity-90 hover:bg-white"
+    title={`Trim narration end · ${formatTime(trimEnd)} trimmed`}
+  />
+)}
 
                   <div
-                    onMouseDown={(e) =>
-                      startVoiceEdit(
-                        e,
-                        scene.id,
-                        "move"
-                      )
-                    }
-                    className="absolute inset-0 z-10 cursor-grab"
+  onMouseDown={(e) =>
+    startVoiceEdit(e, scene.id, "move")
+  }
+  className="absolute inset-0 z-10 cursor-grab pointer-events-auto"
                     title="Drag narration"
                   />
 

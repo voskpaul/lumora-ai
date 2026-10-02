@@ -447,314 +447,380 @@ export async function PUT(
         );
 
     // =====================================================
-    // TRANSACTION
-    // =====================================================
+// TRANSACTION
+// =====================================================
 
-    await prisma.$transaction(
-      async (
-        tx: Prisma.TransactionClient
-      ) => {
-        // =================================================
-        // UPDATE EXISTING SCENES
-        // =================================================
+await prisma.$transaction(
+  async (
+    tx: Prisma.TransactionClient
+  ) => {
+    // =================================================
+    // UPDATE EXISTING SCENES
+    // =================================================
 
-        for (
-          let index = 0;
-          index < incomingScenes.length;
-          index++
-        ) {
-          const scene =
-            incomingScenes[index];
+    for (
+      let index = 0;
+      index < incomingScenes.length;
+      index++
+    ) {
+      const scene =
+        incomingScenes[index];
 
-          const isExisting =
-            Boolean(scene.id) &&
-            !scene.id!.startsWith(
-              "temp-"
-            ) &&
-            existingSceneIds.has(
-              scene.id!
-            );
+      const isExisting =
+        Boolean(scene.id) &&
+        !scene.id!.startsWith("temp-") &&
+        existingSceneIds.has(scene.id!);
 
-          if (
-            isExisting &&
-            scene.id
-          ) {
-            await tx.scene.update({
-              where: {
-                id: scene.id,
-              },
-              data: {
-                order: index,
-                text: scene.text,
-                imagePrompt:
-                  scene.imagePrompt,
-                duration: Math.max(
-                  1,
-                  scene.duration
-                ),
-                transitionType: scene.transitionType ?? "fade",
-                transitionDuration:
-                  scene.transitionType === "none"
-                    ? 0
-                    : Number.isFinite(scene.transitionDuration)
-                      ? Math.max(0, scene.transitionDuration!)
-                      : 0.8,
+      if (
+        isExisting &&
+        scene.id
+      ) {
+        await tx.scene.update({
+          where: {
+            id: scene.id,
+          },
+          data: {
+            order: index,
 
-                      motionOverride:
-  scene.motionOverride ?? null,
+            text: scene.text,
 
-  audioStartTime:
-  typeof scene.audioStartTime === "number" &&
-  Number.isFinite(scene.audioStartTime)
-    ? Math.max(0, scene.audioStartTime)
-    : null,
+            imagePrompt:
+              scene.imagePrompt,
 
-audioTrimStart:
-  typeof scene.audioTrimStart === "number" &&
-  Number.isFinite(scene.audioTrimStart)
-    ? Math.max(0, scene.audioTrimStart)
-    : 0,
+            duration: Math.max(
+              1,
+              scene.duration
+            ),
 
-audioTrimEnd:
-  typeof scene.audioTrimEnd === "number" &&
-  Number.isFinite(scene.audioTrimEnd)
-    ? Math.max(0, scene.audioTrimEnd)
-    : null,
+            transitionType:
+              scene.transitionType ?? "fade",
 
-audioVolume:
-  typeof scene.audioVolume === "number" &&
-  Number.isFinite(scene.audioVolume)
-    ? Math.min(
-        1,
-        Math.max(0, scene.audioVolume)
-      )
-    : 1,
+            transitionDuration:
+              scene.transitionType === "none"
+                ? 0
+                : Number.isFinite(
+                    scene.transitionDuration
+                  )
+                  ? Math.max(
+                      0,
+                      scene.transitionDuration!
+                    )
+                  : 0.8,
 
-audioMuted:
-  scene.audioMuted === true,
-              },
-            });
-          }
-        }
+            motionOverride:
+              scene.motionOverride ?? null,
 
-        // =================================================
-        // CREATE NEW SCENES
-        //
-        // Store sourceSceneId → newSceneId mappings.
-        // This is needed for image copying during Split.
-        // =================================================
-
-        const splitSceneMap =
-          new Map<
-            string,
-            string[]
-          >();
-
-        for (
-          let index = 0;
-          index < incomingScenes.length;
-          index++
-        ) {
-          const scene =
-            incomingScenes[index];
-
-          const isExisting =
-            Boolean(scene.id) &&
-            !scene.id!.startsWith(
-              "temp-"
-            ) &&
-            existingSceneIds.has(
-              scene.id!
-            );
-
-          if (!isExisting) {
-            const createdScene =
-              await tx.scene.create({
-                data: {
-                  order: index,
-                  text: scene.text,
-                  imagePrompt:
-                    scene.imagePrompt,
-                  duration: Math.max(
-                    1,
-                    scene.duration
-                  ),
-                  transitionType: scene.transitionType ?? "fade",
-                  transitionDuration:
-                    scene.transitionType === "none"
-                      ? 0
-                      : Number.isFinite(scene.transitionDuration)
-                        ? Math.max(0, scene.transitionDuration!)
-                        : 0.8,
-
-                        motionOverride:
-  scene.motionOverride ?? null,
-
-  audioStartTime:
-  typeof scene.audioStartTime === "number" &&
-  Number.isFinite(scene.audioStartTime)
-    ? Math.max(0, scene.audioStartTime)
-    : null,
-
-audioTrimStart:
-  typeof scene.audioTrimStart === "number" &&
-  Number.isFinite(scene.audioTrimStart)
-    ? Math.max(0, scene.audioTrimStart)
-    : 0,
-
-audioTrimEnd:
-  typeof scene.audioTrimEnd === "number" &&
-  Number.isFinite(scene.audioTrimEnd)
-    ? Math.max(0, scene.audioTrimEnd)
-    : null,
-
-audioVolume:
-  typeof scene.audioVolume === "number" &&
-  Number.isFinite(scene.audioVolume)
-    ? Math.min(
-        1,
-        Math.max(0, scene.audioVolume)
-      )
-    : 1,
-
-audioMuted:
-  scene.audioMuted === true,
-  
-                  videoId,
-                },
-              });
-
-            // =============================================
-            // REMEMBER SPLIT SOURCE
-            // =============================================
-
-            if (
-              scene.sourceSceneId &&
-              existingSceneIds.has(
-                scene.sourceSceneId
+            audioStartTime:
+              typeof scene.audioStartTime ===
+                "number" &&
+              Number.isFinite(
+                scene.audioStartTime
               )
-            ) {
-              const current =
-                splitSceneMap.get(
-                  scene.sourceSceneId
-                ) ?? [];
+                ? Math.max(
+                    0,
+                    scene.audioStartTime
+                  )
+                : null,
 
-              current.push(
-                createdScene.id
-              );
+            audioTrimStart:
+              typeof scene.audioTrimStart ===
+                "number" &&
+              Number.isFinite(
+                scene.audioTrimStart
+              )
+                ? Math.max(
+                    0,
+                    scene.audioTrimStart
+                  )
+                : 0,
 
-              splitSceneMap.set(
-                scene.sourceSceneId,
-                current
-              );
-            }
-          }
-        }
+            audioTrimEnd:
+              typeof scene.audioTrimEnd ===
+                "number" &&
+              Number.isFinite(
+                scene.audioTrimEnd
+              )
+                ? Math.max(
+                    0,
+                    scene.audioTrimEnd
+                  )
+                : null,
 
-        // =================================================
-        // COPY IMAGES WHEN A SCENE WAS SPLIT
-        // =================================================
+            audioVolume:
+              typeof scene.audioVolume ===
+                "number" &&
+              Number.isFinite(
+                scene.audioVolume
+              )
+                ? Math.min(
+                    1,
+                    Math.max(
+                      0,
+                      scene.audioVolume
+                    )
+                  )
+                : 1,
 
-        for (
-          const [
-            sourceSceneId,
-            newSceneIds,
-          ] of splitSceneMap.entries()
-        ) {
-          const sourceImages =
-            await tx.generatedImage.findMany({
-              where: {
-                videoId,
-                sceneId: sourceSceneId,
-              },
-            });
+            audioMuted:
+              scene.audioMuted === true,
+          },
+        });
+      }
+    }
 
-          if (
-            sourceImages.length === 0
-          ) {
-            continue;
-          }
+    // =================================================
+    // CREATE NEW SCENES
+    //
+    // Store sourceSceneId → newSceneId mappings.
+    // This is needed for image copying during Split.
+    // =================================================
 
-          console.log(
-            "SPLIT IMAGE SOURCE:",
-            sourceSceneId
-          );
+    const splitSceneMap =
+      new Map<
+        string,
+        string[]
+      >();
 
-          console.log(
-            "NEW SPLIT SCENES:",
-            newSceneIds.length
-          );
+    for (
+      let index = 0;
+      index < incomingScenes.length;
+      index++
+    ) {
+      const scene =
+        incomingScenes[index];
 
-          // =============================================
-          // COPY EACH IMAGE TO EVERY NEW SPLIT SCENE
-          // =============================================
+      const isExisting =
+        Boolean(scene.id) &&
+        !scene.id!.startsWith("temp-") &&
+        existingSceneIds.has(scene.id!);
 
-          for (
-            const newSceneId of newSceneIds
-          ) {
-            for (
-              const image of sourceImages
-            ) {
-              await tx.generatedImage.create({
-                data: {
-                  prompt: image.prompt,
-                  imageUrl: image.imageUrl,
-                  userId: image.userId,
-                  videoId: image.videoId,
-                  sceneId: newSceneId,
-                },
-              });
-            }
-          }
-        }
+      if (!isExisting) {
+        const createdScene =
+          await tx.scene.create({
+            data: {
+              order: index,
 
-        // =================================================
-        // DELETE IMAGES FOR SCENES BEING REMOVED
-        //
-        // This prevents orphaned GeneratedImage records.
-        // =================================================
+              text: scene.text,
 
-        if (
-          sceneIdsToDelete.length > 0
-        ) {
-          await tx.generatedImage.deleteMany({
-            where: {
+              imagePrompt:
+                scene.imagePrompt,
+
+              duration: Math.max(
+                1,
+                scene.duration
+              ),
+
+              transitionType:
+                scene.transitionType ?? "fade",
+
+              transitionDuration:
+                scene.transitionType === "none"
+                  ? 0
+                  : Number.isFinite(
+                      scene.transitionDuration
+                    )
+                    ? Math.max(
+                        0,
+                        scene.transitionDuration!
+                      )
+                    : 0.8,
+
+              motionOverride:
+                scene.motionOverride ?? null,
+
+              audioStartTime:
+                typeof scene.audioStartTime ===
+                  "number" &&
+                Number.isFinite(
+                  scene.audioStartTime
+                )
+                  ? Math.max(
+                      0,
+                      scene.audioStartTime
+                    )
+                  : null,
+
+              audioTrimStart:
+                typeof scene.audioTrimStart ===
+                  "number" &&
+                Number.isFinite(
+                  scene.audioTrimStart
+                )
+                  ? Math.max(
+                      0,
+                      scene.audioTrimStart
+                    )
+                  : 0,
+
+              audioTrimEnd:
+                typeof scene.audioTrimEnd ===
+                  "number" &&
+                Number.isFinite(
+                  scene.audioTrimEnd
+                )
+                  ? Math.max(
+                      0,
+                      scene.audioTrimEnd
+                    )
+                  : null,
+
+              audioVolume:
+                typeof scene.audioVolume ===
+                  "number" &&
+                Number.isFinite(
+                  scene.audioVolume
+                )
+                  ? Math.min(
+                      1,
+                      Math.max(
+                        0,
+                        scene.audioVolume
+                      )
+                    )
+                  : 1,
+
+              audioMuted:
+                scene.audioMuted === true,
+
               videoId,
-              sceneId: {
-                in: sceneIdsToDelete,
-              },
             },
           });
 
-          console.log(
-            "DELETED SCENE IMAGES:",
-            sceneIdsToDelete.length
-          );
-        }
-
-        // =================================================
-        // DELETE REMOVED SCENES
-        // =================================================
+        // =============================================
+        // REMEMBER SPLIT SOURCE
+        // =============================================
 
         if (
-          sceneIdsToDelete.length > 0
+          scene.sourceSceneId &&
+          existingSceneIds.has(
+            scene.sourceSceneId
+          )
         ) {
-          await tx.scene.deleteMany({
-            where: {
-              id: {
-                in: sceneIdsToDelete,
-              },
-              videoId,
-            },
-          });
+          const current =
+            splitSceneMap.get(
+              scene.sourceSceneId
+            ) ?? [];
 
-          console.log(
-            "DELETED SCENES:",
-            sceneIdsToDelete.length
+          current.push(
+            createdScene.id
+          );
+
+          splitSceneMap.set(
+            scene.sourceSceneId,
+            current
           );
         }
       }
-    );
+    }
+
+    // =================================================
+    // COPY IMAGES WHEN A SCENE WAS SPLIT
+    // =================================================
+
+    for (
+      const [
+        sourceSceneId,
+        newSceneIds,
+      ] of splitSceneMap.entries()
+    ) {
+      const sourceImages =
+        await tx.generatedImage.findMany({
+          where: {
+            videoId,
+            sceneId: sourceSceneId,
+          },
+        });
+
+      if (
+        sourceImages.length === 0
+      ) {
+        continue;
+      }
+
+      console.log(
+        "SPLIT IMAGE SOURCE:",
+        sourceSceneId
+      );
+
+      console.log(
+        "NEW SPLIT SCENES:",
+        newSceneIds.length
+      );
+
+      // =============================================
+      // COPY EACH IMAGE TO EVERY NEW SPLIT SCENE
+      // =============================================
+
+      for (
+        const newSceneId of newSceneIds
+      ) {
+        for (
+          const image of sourceImages
+        ) {
+          await tx.generatedImage.create({
+            data: {
+              prompt: image.prompt,
+              imageUrl: image.imageUrl,
+              userId: image.userId,
+              videoId: image.videoId,
+              sceneId: newSceneId,
+            },
+          });
+        }
+      }
+    }
+
+    // =================================================
+    // DELETE IMAGES FOR SCENES BEING REMOVED
+    //
+    // This prevents orphaned GeneratedImage records.
+    // =================================================
+
+    if (
+      sceneIdsToDelete.length > 0
+    ) {
+      await tx.generatedImage.deleteMany({
+        where: {
+          videoId,
+          sceneId: {
+            in: sceneIdsToDelete,
+          },
+        },
+      });
+
+      console.log(
+        "DELETED SCENE IMAGES:",
+        sceneIdsToDelete.length
+      );
+    }
+
+    // =================================================
+    // DELETE REMOVED SCENES
+    // =================================================
+
+    if (
+      sceneIdsToDelete.length > 0
+    ) {
+      await tx.scene.deleteMany({
+        where: {
+          id: {
+            in: sceneIdsToDelete,
+          },
+          videoId,
+        },
+      });
+
+      console.log(
+        "DELETED SCENES:",
+        sceneIdsToDelete.length
+      );
+    }
+  },
+  {
+    maxWait: 10000,
+    timeout: 30000,
+  }
+);
 
     // =====================================================
     // GET FINAL SAVED SCENES
