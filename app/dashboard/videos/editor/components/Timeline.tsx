@@ -104,6 +104,20 @@ interface ApiScene {
   audioMuted?: boolean | null;
 }
 
+
+interface MusicTrack {
+  id: string;
+  videoId: string;
+  name?: string | null;
+  audioUrl: string;
+  duration: number;
+  startTime: number;
+  trimStart: number;
+  trimEnd: number;
+  volume: number;
+  muted: boolean;
+}
+
 const TRANSITION_DURATION = 0.8;
 const MIN_SCENE_DURATION = 1;
 const NEW_SCENE_DURATION = 5;
@@ -154,6 +168,11 @@ export default function Timeline({
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [musicTracks, setMusicTracks] = useState<MusicTrack[]>([]);
+  const [selectedMusicTrackId, setSelectedMusicTrackId] = useState<string | null>(null);
+  const [musicLoading, setMusicLoading] = useState(false);
+  const [musicError, setMusicError] = useState<string | null>(null);
+  const musicDragRef = useRef<{ id: string; startX: number; originalStart: number; width: number; duration: number } | null>(null);
 
   const scenesRef = useRef<Scene[]>([]);
 
@@ -297,7 +316,7 @@ export default function Timeline({
       const remaining =
         safeSeconds % 60;
 
-      return `${minutes}:${remaining
+      return `minutes:{remaining
         .toFixed(2)
         .padStart(5, "0")}`;
     },
@@ -933,7 +952,7 @@ export default function Timeline({
             attempt < maxAttempts
           ) {
             console.log(
-              `TIMELINE: no scenes yet. Retrying ${attempt}/${maxAttempts}...`
+              `TIMELINE: no scenes yet. Retrying attempt/{maxAttempts}...`
             );
 
             await new Promise(
@@ -1021,6 +1040,134 @@ export default function Timeline({
       cancelled = true;
     };
   }, [loadScenes]);
+
+  const loadMusicTracks = useCallback(async () => {
+    try {
+      setMusicLoading(true);
+      const response = await fetch(`/api/videos/${videoId}/music-tracks`, { cache: "no-store" });
+      const data = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(data?.error || `Failed to load music (${response.status})`);
+      const tracks = Array.isArray(data?.musicTracks) ? data.musicTracks as MusicTrack[] : [];
+      setMusicTracks(tracks);
+      setSelectedMusicTrackId((current) => current && tracks.some((track) => track.id === current) ? current : tracks[0]?.id ?? null);
+      setMusicError(null);
+    } catch (error) {
+      console.error("Failed to load music tracks:", error);
+      setMusicError(error instanceof Error ? error.message : "Failed to load music tracks");
+    } finally {
+      setMusicLoading(false);
+    }
+  }, [videoId]);
+
+  useEffect(() => {
+    void loadMusicTracks();
+  }, [loadMusicTracks]);
+
+  const addMusicTrack = useCallback(async () => {
+    const audioUrl = window.prompt("Paste a direct URL to an audio file (MP3, WAV, or supported audio URL):");
+    if (!audioUrl?.trim()) return;
+    const durationInput = window.prompt("Audio duration in seconds:", "30");
+    if (durationInput === null) return;
+    const duration = Number(durationInput);
+    if (!Number.isFinite(duration) || duration <= 0) {
+      setMusicError("Enter a valid audio duration greater than zero.");
+      return;
+    }
+    try {
+      setMusicLoading(true);
+      setMusicError(null);
+      const response = await fetch(`/api/videos/${videoId}/music-tracks`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ audioUrl: audioUrl.trim(), duration, name: audioUrl.trim().split("/").pop() || "Music", startTime: Math.max(0, currentTime), trimStart: 0, trimEnd: 0, volume: 0.35, muted: false }),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(data?.error || `Failed to add music (${response.status})`);
+      const track = data.musicTrack as MusicTrack;
+      setMusicTracks((current) => [...current, track]);
+      setSelectedMusicTrackId(track.id);
+    } catch (error) {
+      console.error("Failed to add music track:", error);
+      setMusicError(error instanceof Error ? error.message : "Failed to add music track");
+    } finally {
+      setMusicLoading(false);
+    }
+  }, [videoId, currentTime]);
+
+  const updateMusicTrack = useCallback(async (id: string, changes: Partial<MusicTrack>) => {
+    const previous = musicTracks;
+    const updated = previous.map((track) => track.id === id ? { ...track, ...changes } : track);
+    setMusicTracks(updated);
+    try {
+      const response = await fetch(`/api/videos/${videoId}/music-tracks`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, ...changes }),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(data?.error || `Failed to save music (${response.status})`);
+      if (data?.musicTrack) setMusicTracks((current) => current.map((track) => track.id === id ? data.musicTrack as MusicTrack : track));
+      setMusicError(null);
+    } catch (error) {
+      console.error("Failed to update music track:", error);
+      setMusicTracks(previous);
+      setMusicError(error instanceof Error ? error.message : "Failed to save music track");
+    }
+  }, [videoId, musicTracks]);
+
+  const deleteMusicTrack = useCallback(async (id: string) => {
+    if (!window.confirm("Delete this music clip?")) return;
+    const previous = musicTracks;
+    setMusicTracks((current) => current.filter((track) => track.id !== id));
+    if (selectedMusicTrackId === id) setSelectedMusicTrackId(null);
+    try {
+      const response = await fetch(`/api/videos/${videoId}/music-tracks`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(data?.error || `Failed to delete music (${response.status})`);
+      setMusicError(null);
+    } catch (error) {
+      console.error("Failed to delete music track:", error);
+      setMusicTracks(previous);
+      setMusicError(error instanceof Error ? error.message : "Failed to delete music track");
+    }
+  }, [videoId, musicTracks, selectedMusicTrackId]);
+
+  const beginMusicMove = (event: React.MouseEvent<HTMLDivElement>, track: MusicTrack) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const container = event.currentTarget.closest("[data-music-track-container]") as HTMLElement | null;
+    if (!container || totalDuration <= 0 || saving || musicLoading) return;
+    const rect = container.getBoundingClientRect();
+    if (rect.width <= 0) return;
+    musicDragRef.current = { id: track.id, startX: event.clientX, originalStart: track.startTime, width: rect.width, duration: totalDuration };
+    setSelectedMusicTrackId(track.id);
+    const handleMove = (moveEvent: MouseEvent) => {
+      const session = musicDragRef.current;
+      if (!session) return;
+      const delta = ((moveEvent.clientX - session.startX) / session.width) * session.duration;
+      const nextStart = Math.round(Math.max(0, Math.min(session.duration, session.originalStart + delta)) * 1000) / 1000;
+      setMusicTracks((current) => current.map((item) => item.id === session.id ? { ...item, startTime: nextStart } : item));
+    };
+    const handleUp = () => {
+      window.removeEventListener("mousemove", handleMove);
+      window.removeEventListener("mouseup", handleUp);
+      const session = musicDragRef.current;
+      musicDragRef.current = null;
+      if (!session) return;
+      const finalTrack = musicTracks.find((item) => item.id === session.id);
+      const liveTrack = document.querySelector(`[data-music-clip="${session.id}"]`) as HTMLElement | null;
+      const rect = container.getBoundingClientRect();
+      const leftPercent = liveTrack ? Number.parseFloat(liveTrack.style.left) : NaN;
+      const nextStart = Number.isFinite(leftPercent) ? Math.max(0, Math.min(session.duration, (leftPercent / 100) * session.duration)) : finalTrack?.startTime ?? session.originalStart;
+      void updateMusicTrack(session.id, { startTime: Math.round(nextStart * 1000) / 1000 });
+    };
+    window.addEventListener("mousemove", handleMove);
+    window.addEventListener("mouseup", handleUp);
+  };
 
   const persistScenes = useCallback(
     async (items: Scene[]) => {
@@ -3350,6 +3497,15 @@ export default function Timeline({
 
           <button
             type="button"
+            onClick={() => void addMusicTrack()}
+            disabled={loading || saving || musicLoading || totalDuration <= 0}
+            className="rounded-lg border border-emerald-300/20 bg-emerald-400/15 px-3 py-1.5 text-sm font-medium text-emerald-200 transition hover:bg-emerald-400/25 disabled:cursor-not-allowed disabled:opacity-30"
+          >
+            {musicLoading ? "Music..." : "+ Add Music"}
+          </button>
+
+          <button
+            type="button"
             onClick={handleUndo}
             disabled={
               history.length === 0 ||
@@ -3591,6 +3747,51 @@ export default function Timeline({
           </div>
         </div>
       )}
+
+      {musicError && (
+        <div className="mt-3 flex items-center justify-between rounded-lg border border-red-400/20 bg-red-500/10 px-3 py-2 text-xs text-red-200">
+          <span>{musicError}</span>
+          <button type="button" onClick={() => setMusicError(null)} className="ml-3 text-red-100/70 hover:text-white">Dismiss</button>
+        </div>
+      )}
+
+      {musicTracks.length > 0 && selectedMusicTrackId && (() => {
+        const track = musicTracks.find((item) => item.id === selectedMusicTrackId);
+        if (!track) return null;
+        return (
+          <div className="mt-3 rounded-xl border border-emerald-300/20 bg-emerald-500/5 p-3">
+            <div className="mb-3 flex items-center justify-between">
+              <div>
+                <div className="text-[10px] font-semibold uppercase tracking-wide text-emerald-200/70">Music Track Editing</div>
+                <div className="mt-1 max-w-xl truncate text-xs text-white/70">{track.name || track.audioUrl}</div>
+              </div>
+              <button type="button" onClick={() => void deleteMusicTrack(track.id)} disabled={musicLoading} className="rounded-lg border border-red-300/20 bg-red-500/10 px-3 py-1.5 text-[10px] text-red-200 hover:bg-red-500/20 disabled:opacity-40">Delete clip</button>
+            </div>
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+              <label className="text-[10px] text-white/50">Start (seconds)
+                <input type="number" min="0" max={totalDuration} step="0.1" value={track.startTime} onChange={(e) => setMusicTracks((items) => items.map((item) => item.id === track.id ? { ...item, startTime: Math.max(0, Number(e.target.value) || 0) } : item))} onBlur={(e) => void updateMusicTrack(track.id, { startTime: Math.max(0, Number(e.target.value) || 0) })} className="mt-1 w-full rounded-lg border border-white/10 bg-black/30 px-2 py-1.5 text-xs text-white outline-none" />
+              </label>
+              <label className="text-[10px] text-white/50">Trim start (seconds)
+                <input type="number" min="0" max={Math.max(0, track.duration - 0.1)} step="0.1" value={track.trimStart} onChange={(e) => setMusicTracks((items) => items.map((item) => item.id === track.id ? { ...item, trimStart: Math.max(0, Number(e.target.value) || 0) } : item))} onBlur={(e) => void updateMusicTrack(track.id, { trimStart: Math.max(0, Number(e.target.value) || 0) })} className="mt-1 w-full rounded-lg border border-white/10 bg-black/30 px-2 py-1.5 text-xs text-white outline-none" />
+              </label>
+              <label className="text-[10px] text-white/50">Trim end (seconds)
+                <input type="number" min="0" max={Math.max(0, track.duration - track.trimStart - 0.1)} step="0.1" value={track.trimEnd} onChange={(e) => setMusicTracks((items) => items.map((item) => item.id === track.id ? { ...item, trimEnd: Math.max(0, Number(e.target.value) || 0) } : item))} onBlur={(e) => void updateMusicTrack(track.id, { trimEnd: Math.max(0, Number(e.target.value) || 0) })} className="mt-1 w-full rounded-lg border border-white/10 bg-black/30 px-2 py-1.5 text-xs text-white outline-none" />
+              </label>
+              <div className="text-[10px] text-white/50">Clip duration
+                <div className="mt-2 text-xs text-emerald-200">{formatTime(Math.max(0.1, track.duration - track.trimStart - track.trimEnd))}</div>
+              </div>
+            </div>
+            <div className="mt-3 flex items-center gap-4">
+              <div className="flex min-w-0 flex-1 items-center gap-3">
+                <span className="shrink-0 text-[10px] text-white/50">Volume</span>
+                <input type="range" min="0" max="1" step="0.01" value={track.volume} onChange={(e) => setMusicTracks((items) => items.map((item) => item.id === track.id ? { ...item, volume: Number(e.target.value) } : item))} onPointerUp={(e) => void updateMusicTrack(track.id, { volume: Number((e.target as HTMLInputElement).value) })} onBlur={(e) => void updateMusicTrack(track.id, { volume: Number(e.target.value) })} className="h-1.5 min-w-0 flex-1 cursor-pointer accent-emerald-400" />
+                <span className="w-10 text-right text-[10px] text-white/50">{Math.round(track.volume * 100)}%</span>
+              </div>
+              <button type="button" onClick={() => void updateMusicTrack(track.id, { muted: !track.muted })} className={`rounded-lg border px-3 py-1.5 text-[10px] font-medium ${track.muted ? "border-red-300/40 bg-red-500/20 text-red-200" : "border-emerald-300/20 bg-white/5 text-white/70 hover:bg-white/10"}`}>{track.muted ? "🔇 Muted" : "🔊 Mute"}</button>
+            </div>
+          </div>
+        );
+      })()}
 
       <div
         onClick={handleSeek}
@@ -4092,7 +4293,7 @@ export default function Timeline({
                                   </div>
 
                                   <div
-                                    key={`${scene.id}-${transitionPreviewKey}`}
+                                    key={`scene.id-{transitionPreviewKey}`}
                                     className="relative aspect-video w-full overflow-hidden rounded-lg border border-white/10 bg-black"
                                   >
                                     {currentImage ? (
@@ -4468,7 +4669,7 @@ const voiceLeft =
       console.log("LEFT HANDLE CLICKED:", scene.id);
       startVoiceEdit(e, scene.id, "trim", "left");
     }}
-    className="absolute left-0 top-0 z-[100] h-full w-3 cursor-ew-resize pointer-events-auto bg-violet-200 opacity-90 hover:bg-white"
+    className="absolute left-0 top-0 z-100 h-full w-3 cursor-ew-resize pointer-events-auto bg-violet-200 opacity-90 hover:bg-white"
     title={`Trim narration start · ${formatTime(trimStart)} trimmed`}
   />
 )}
@@ -4481,7 +4682,7 @@ const voiceLeft =
       console.log("RIGHT HANDLE CLICKED:", scene.id);
       startVoiceEdit(e, scene.id, "trim", "right");
     }}
-    className="absolute right-0 top-0 z-[100] h-full w-3 cursor-ew-resize pointer-events-auto bg-violet-200 opacity-90 hover:bg-white"
+    className="absolute right-0 top-0 z-100 h-full w-3 cursor-ew-resize pointer-events-auto bg-violet-200 opacity-90 hover:bg-white"
     title={`Trim narration end · ${formatTime(trimEnd)} trimmed`}
   />
 )}
@@ -4518,7 +4719,22 @@ const voiceLeft =
           )}
         </div>
 
-        <div className="absolute inset-x-0 bottom-7 h-1 bg-cyan-500/20" />
+        <div data-music-track-container className="absolute inset-x-0 top-32 h-10 border-t border-white/5 bg-black/20" onClick={(e) => { e.stopPropagation(); }}>
+          <div className="absolute left-2 top-1 z-10 text-[10px] font-medium uppercase tracking-wide text-emerald-200/50">Music Track</div>
+          {musicTracks.map((track) => {
+            const visibleDuration = Math.max(0, track.duration - track.trimStart - track.trimEnd);
+            const left = totalDuration > 0 ? Math.max(0, Math.min(100, (track.startTime / totalDuration) * 100)) : 0;
+            const width = totalDuration > 0 ? Math.max(1, Math.min((visibleDuration / totalDuration) * 100, 100 - left)) : 1;
+            const selected = selectedMusicTrackId === track.id;
+            return (
+              <div key={track.id} data-music-clip={track.id} onClick={(e) => { e.stopPropagation(); setSelectedMusicTrackId(track.id); setSelectedSceneId(null); setSelectedVoiceSceneId(null); }} onMouseDown={(e) => beginMusicMove(e, track)} title={`${track.name || "Music"} · drag to move · ${formatTime(visibleDuration)}`} className={`absolute top-1 h-8 cursor-grab overflow-hidden rounded border px-2 py-1 text-[9px] shadow-sm ${selected ? "border-emerald-200 bg-emerald-500/50 text-white ring-2 ring-inset ring-emerald-200" : "border-emerald-300/30 bg-emerald-500/25 text-emerald-100 hover:bg-emerald-500/40"} ${track.muted ? "opacity-50" : ""}`} style={{ left: `${left}%`, width: `${width}%` }}>
+                <div className="pointer-events-none flex items-center gap-1 truncate font-medium">{track.muted ? "🔇" : "♫"} {track.name || "Music"}</div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="absolute bottom-7 h-1 bg-cyan-500/20" />
 
         <div
           className="pointer-events-none absolute top-0 z-20 h-full w-0.5 bg-cyan-400"
@@ -4528,7 +4744,7 @@ const voiceLeft =
         />
 
         <div className="absolute bottom-2 left-2 text-xs text-white/40">
-          Video Track · Voice Track
+          Video Track · Voice Track · Music Track
         </div>
 
         <div className="absolute bottom-2 right-2 text-xs text-white/30">

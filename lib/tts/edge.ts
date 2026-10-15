@@ -1,36 +1,26 @@
-import { MsEdgeTTS } from "msedge-tts";
+
+import { EdgeTTS } from "@andresaya/edge-tts";
 import fs from "fs";
+import path from "path";
 
 export async function generateEdgeVoice(
   text: string,
   outputDir: string,
   voiceType: string = "en-US-AriaNeural"
 ) {
-  if (!fs.existsSync(outputDir)) {
-    fs.mkdirSync(outputDir, {
-      recursive: true,
-    });
-  }
+  fs.mkdirSync(outputDir, { recursive: true });
 
-  const tts = new MsEdgeTTS();
+  const tts = new EdgeTTS();
 
-  const format =
-    "audio-24khz-48kbitrate-mono-mp3" as any;
+  console.log("🎤 Edge Voice:", voiceType);
 
-  console.log(
-    "🎤 Edge Voice:",
-    voiceType
-  );
+  await tts.synthesize(text, voiceType, {
+    outputFormat: "audio-24khz-48kbitrate-mono-mp3",
+  });
 
-  await tts.setMetadata(
-    voiceType as any,
-    format
-  );
+  const outputPath = path.join(outputDir, "audio");
 
-  await tts.toFile(
-    outputDir,
-    text
-  );
+  await tts.toFile(outputPath);
 
-  return `${outputDir}/audio.mp3`;
+  return `${outputPath}.mp3`;
 }

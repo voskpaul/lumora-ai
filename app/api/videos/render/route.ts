@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import path from "path";
 import fs from "fs";
 import type { Scene } from "@prisma/client";
+import { resolvePublicAudioPath } from "@/lib/renderer/v2/timeline-music";
 
 import { renderV2 } from "@/lib/renderer/v2/render";
 

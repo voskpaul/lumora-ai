@@ -273,14 +273,14 @@ export async function POST(req: Request) {
       // ===================================================
 
       const savedScene = await prisma.scene.create({
-        data: {
-          order: scene.id,
-          text: scene.prompt || "",
-          imagePrompt,
-          duration: scene.duration,
-          videoId: video.id,
-        },
-      });
+  data: {
+    order: scene.id,
+    text: scene.narration || "",
+    imagePrompt,
+    duration: scene.duration,
+    videoId: video.id,
+  },
+});
 
       console.log(
         `🎬 Scene saved: ${savedScene.id}`
