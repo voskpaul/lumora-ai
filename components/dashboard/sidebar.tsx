@@ -61,7 +61,7 @@ export default function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden w-72 border-r border-white/10 bg-black/20 backdrop-blur-xl lg:block">
+    <aside className="hidden h-full w-72 shrink-0 flex-col overflow-hidden border-r border-white/10 bg-black/20 backdrop-blur-xl lg:flex">
 
       {/* Logo */}
       <div className="flex h-20 items-center border-b border-white/10 px-6">
@@ -87,7 +87,7 @@ export default function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <div className="p-4">
+      <div className="min-h-0 flex-1 overflow-y-auto p-4">
 
         <div className="mb-3 px-3 text-xs uppercase tracking-widest text-white/40">
           Workspace
@@ -122,7 +122,7 @@ export default function Sidebar() {
       </div>
 
       {/* Bottom Card */}
-      <div className="absolute bottom-5 left-4 right-4 rounded-3xl border border-white/10 bg-white/5 p-4 backdrop-blur-xl">
+      <div className="mx-4 mb-4 shrink-0 rounded-3xl border border-white/10 bg-white/5 p-4 backdrop-blur-xl">
 
         <p className="text-sm font-medium">
           Free Plan

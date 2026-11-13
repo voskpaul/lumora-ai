@@ -7,6 +7,7 @@ import path from "path";
 import fs from "fs";
 import type { Scene } from "@prisma/client";
 import { resolvePublicAudioPath } from "@/lib/renderer/v2/timeline-music";
+import type { MusicTrack } from "@prisma/client";
 
 import { renderV2 } from "@/lib/renderer/v2/render";
 
@@ -93,28 +94,28 @@ export async function POST(req: Request) {
     // 4. GET VIDEO + TIMELINE SCENES
     // =====================================================
 
-    const video = await prisma.video.findFirst({
-      where: {
-        id: videoId,
-        userId: user.id,
+  const video = await prisma.video.findFirst({
+  where: {
+    id: videoId,
+    userId: user.id,
+  },
+
+  include: {
+    scenes: {
+      orderBy: {
+        order: "asc",
       },
 
       include: {
-        scenes: {
+        generatedImages: {
           orderBy: {
-            order: "asc",
-          },
-
-          include: {
-            generatedImages: {
-              orderBy: {
-                createdAt: "asc",
-              },
-            },
+            createdAt: "asc",
           },
         },
       },
-    });
+    },
+  },
+});
 
     if (!video) {
       return NextResponse.json(
@@ -604,7 +605,7 @@ export async function POST(req: Request) {
     // RENDER
     // =====================================================
 
-    const renderResult = await renderV2({
+   const renderResult = await renderV2({
   videoId: video.id,
   imagesDir,
   voicePath,

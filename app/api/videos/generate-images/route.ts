@@ -291,9 +291,9 @@ export async function POST(req: Request) {
       // ===================================================
 
       const imageUrl =
-        `https://image.pollinations.ai/prompt/${encodeURIComponent(
-          imagePrompt
-        )}?model=flux&width=1080&height=1920`;
+  `https://gen.pollinations.ai/image/${encodeURIComponent(
+    imagePrompt
+  )}?model=flux&width=1080&height=1920`;
 
       console.log("🖼️ Generating image...");
 
@@ -301,13 +301,13 @@ export async function POST(req: Request) {
       // DOWNLOAD IMAGE
       // ===================================================
 
-      const response = await axios.get(
-        imageUrl,
-        {
-          responseType: "arraybuffer",
-        }
-      );
-
+      const response = await axios.get(imageUrl, {
+  responseType: "arraybuffer",
+  headers: {
+    Authorization: `Bearer ${process.env.POLLINATIONS_API_KEY}`,
+  },
+  timeout: 120000,
+});
       // ===================================================
       // FILE
       // ===================================================

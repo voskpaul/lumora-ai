@@ -8,6 +8,10 @@ import {
   useState,
 } from "react";
 
+import MusicTrackPreview from "./MusicTrackPreview";
+import NarrationTrackPreview from "./NarrationTrackPreview";
+import type React from "react";
+
 import SceneInspector from "./SceneInspector";
 
 interface TimelineProps {
@@ -16,6 +20,9 @@ interface TimelineProps {
   currentTime?: number;
   onSeek?: (time: number) => void;
   isPlaying?: boolean;
+  preview?: React.ReactNode;
+  onTogglePlay: () => void;
+  onRestart: () => void;
 }
 
 type MotionOverride =
@@ -132,6 +139,9 @@ export default function Timeline({
   currentTime = 0,
   onSeek,
   isPlaying = false,
+  onTogglePlay,
+  onRestart,
+  preview,
 }: TimelineProps) {
   const [scenes, setScenes] = useState<Scene[]>([]);
   const [history, setHistory] = useState<Scene[][]>([]);
@@ -316,9 +326,9 @@ export default function Timeline({
       const remaining =
         safeSeconds % 60;
 
-      return `minutes:{remaining
-        .toFixed(2)
-        .padStart(5, "0")}`;
+      return `${String(minutes).padStart(2, "0")}:${remaining
+  .toFixed(2)
+  .padStart(5, "0")}`;
     },
     []
   );
@@ -3440,12 +3450,33 @@ export default function Timeline({
   }
 
   return (
-    <div className="mt-6 rounded-xl border border-white/10 bg-white/5 p-4">
-      <div className="mb-3 flex items-center justify-between">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-white/10 bg-[#111116] p-2">
+      <div className="mb-2 flex shrink-0 items-center justify-between gap-2">
         <div className="flex items-center gap-3">
           <h2 className="text-sm font-semibold text-white">
             Timeline
           </h2>
+          <div className="flex items-center gap-1">
+  <button
+    type="button"
+    onClick={onRestart}
+    disabled={!onRestart}
+    title="Restart video (Home)"
+    className="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-xs text-white/70 transition hover:bg-white/10 disabled:opacity-30"
+  >
+    ↺
+  </button>
+
+  <button
+    type="button"
+    onClick={onTogglePlay}
+    disabled={!onTogglePlay}
+    className="rounded-md bg-cyan-500 px-3 py-1 text-xs font-semibold text-black transition hover:bg-cyan-400 disabled:opacity-30"
+  >
+    {isPlaying ? "Pause" : "Play"}
+  </button>
+</div>
+          
 
           {isPlaying && (
             <span className="flex items-center gap-1 text-xs text-cyan-300">
@@ -3564,7 +3595,9 @@ export default function Timeline({
           )}{" "}
           / {formatTime(totalDuration)}
         </span>
-      </div>
+            </div>
+
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
 
       {selectedScene &&
         isTemporaryScene(
@@ -3577,8 +3610,14 @@ export default function Timeline({
           </div>
         )}
 
-      {!loading && (
-        <div className="mt-4">
+      <div className="grid h-[min(40vh,380px)] min-h-[220px] shrink-0 grid-cols-1 grid-rows-[minmax(140px,1.4fr)_minmax(0,1fr)] gap-2 xl:grid-cols-[minmax(0,1.7fr)_minmax(300px,1fr)] xl:grid-rows-1">
+        <div className="flex h-full min-h-0 w-full items-center justify-center overflow-hidden rounded-lg border border-white/10 bg-black/40 p-1">
+          {preview}
+        </div>
+
+        <div className="h-full min-h-0 space-y-2 overflow-y-auto overscroll-contain pr-1">
+          {!loading && (
+            <div>
          <SceneInspector
   videoId={videoId}
   scene={selectedScene}
@@ -3791,12 +3830,14 @@ export default function Timeline({
             </div>
           </div>
         );
-      })()}
+          })()}
+        </div>
+      </div>
 
       <div
-        onClick={handleSeek}
-        className="relative mt-4 h-44 cursor-pointer overflow-visible rounded-lg bg-black/40"
-      >
+  onClick={handleSeek}
+  className="relative mt-2 h-[190px] min-h-[190px] min-w-0 flex-none cursor-pointer overflow-visible rounded-lg bg-black/40"
+>
         {loading && (
           <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/30 text-sm text-white/50">
             Loading scenes...
@@ -4533,7 +4574,7 @@ export default function Timeline({
 
         <div
           data-voice-track
-          className="absolute inset-x-0 top-20 h-10 border-t border-white/5 bg-black/20"
+          className="absolute inset-x-0 top-20 h-9 border-t border-white/5 bg-black/20"
           onClick={(e) => {
             e.stopPropagation();
 
@@ -4627,7 +4668,7 @@ const voiceLeft =
                       scene.id
                     );
                   }}
-                  className={`absolute top-1 h-8 cursor-grab overflow-hidden rounded border px-2 py-1 text-[9px] shadow-sm transition ${
+                  className={`absolute top-1 h-7 cursor-grab overflow-hidden rounded border px-2 py-1 text-[10px] shadow-sm transition ${
                     isSelected
                       ? "border-violet-300 bg-violet-500/50 text-white ring-2 ring-inset ring-violet-200"
                       : "border-violet-300/30 bg-violet-500/25 text-violet-100 hover:bg-violet-500/40"
@@ -4669,7 +4710,7 @@ const voiceLeft =
       console.log("LEFT HANDLE CLICKED:", scene.id);
       startVoiceEdit(e, scene.id, "trim", "left");
     }}
-    className="absolute left-0 top-0 z-100 h-full w-3 cursor-ew-resize pointer-events-auto bg-violet-200 opacity-90 hover:bg-white"
+    className="pointer-events-auto absolute left-0 top-0 z-[100] h-full w-3 cursor-ew-resize bg-violet-200 opacity-90 hover:bg-white"
     title={`Trim narration start · ${formatTime(trimStart)} trimmed`}
   />
 )}
@@ -4682,7 +4723,7 @@ const voiceLeft =
       console.log("RIGHT HANDLE CLICKED:", scene.id);
       startVoiceEdit(e, scene.id, "trim", "right");
     }}
-    className="absolute right-0 top-0 z-100 h-full w-3 cursor-ew-resize pointer-events-auto bg-violet-200 opacity-90 hover:bg-white"
+    className="pointer-events-auto absolute right-0 top-0 z-[100] h-full w-3 cursor-ew-resize bg-violet-200 opacity-90 hover:bg-white"
     title={`Trim narration end · ${formatTime(trimEnd)} trimmed`}
   />
 )}
@@ -4695,7 +4736,7 @@ const voiceLeft =
                     title="Drag narration"
                   />
 
-                  <div className="relative z-20 flex min-w-0 items-center gap-1 pointer-events-none">
+                  <div className="pointer-events-none relative z-20 flex min-w-0 items-center gap-1.5 overflow-hidden px-1">
                     <span className="shrink-0">
                       {scene.audioMuted
                         ? "🔇"
@@ -4719,8 +4760,10 @@ const voiceLeft =
           )}
         </div>
 
-        <div data-music-track-container className="absolute inset-x-0 top-32 h-10 border-t border-white/5 bg-black/20" onClick={(e) => { e.stopPropagation(); }}>
-          <div className="absolute left-2 top-1 z-10 text-[10px] font-medium uppercase tracking-wide text-emerald-200/50">Music Track</div>
+        <div data-music-track-container className="absolute inset-x-0 top-[124px] h-9 border-t border-white/5 bg-black/20" onClick={(e) => { e.stopPropagation(); }}>
+          <div className="absolute left-2 top-1 z-10 rounded bg-black/80 px-1.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-200 shadow">
+  Music Track
+</div>
           {musicTracks.map((track) => {
             const visibleDuration = Math.max(0, track.duration - track.trimStart - track.trimEnd);
             const left = totalDuration > 0 ? Math.max(0, Math.min(100, (track.startTime / totalDuration) * 100)) : 0;
@@ -4734,6 +4777,13 @@ const voiceLeft =
           })}
         </div>
 
+        <NarrationTrackPreview tracks={scenes.filter((scene) => Boolean(scene.audioUrl)).map((scene) => ({ id: scene.id, audioUrl: scene.audioUrl!, startTime: getVoiceStart(scene), duration: scene.audioDuration ?? scene.duration, trimStart: scene.audioTrimStart ?? 0, trimEnd: scene.audioTrimEnd ?? 0, volume: scene.audioVolume ?? 1, muted: scene.audioMuted ?? false }))} currentTime={currentTime} isPlaying={isPlaying} />
+        <MusicTrackPreview
+  tracks={musicTracks}
+  currentTime={currentTime}
+  isPlaying={isPlaying}
+/>
+
         <div className="absolute bottom-7 h-1 bg-cyan-500/20" />
 
         <div
@@ -4743,13 +4793,34 @@ const voiceLeft =
           }}
         />
 
-        <div className="absolute bottom-2 left-2 text-xs text-white/40">
-          Video Track · Voice Track · Music Track
-        </div>
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex h-7 items-center justify-between border-t border-white/10 bg-zinc-950/95 px-3">
+  <div className="flex items-center gap-4">
+    <div className="flex items-center gap-1.5">
+      <span className="h-2 w-2 rounded-full bg-cyan-400" />
+      <span className="text-[10px] font-medium text-white/60">
+        Video
+      </span>
+    </div>
 
-        <div className="absolute bottom-2 right-2 text-xs text-white/30">
-          {formatTime(totalDuration)}
-        </div>
+    <div className="flex items-center gap-1.5">
+      <span className="h-2 w-2 rounded-full bg-violet-400" />
+      <span className="text-[10px] font-medium text-white/60">
+        Voice
+      </span>
+    </div>
+
+    <div className="flex items-center gap-1.5">
+      <span className="h-2 w-2 rounded-full bg-emerald-400" />
+      <span className="text-[10px] font-medium text-white/60">
+        Music
+      </span>
+    </div>
+  </div>
+
+  <span className="text-[10px] font-semibold tabular-nums text-white/50">
+    {formatTime(totalDuration)}
+  </span>
+</div>
 
         <style jsx>{`
           @keyframes timelineTransitionFade {
@@ -4785,7 +4856,8 @@ const voiceLeft =
               transform: scale(1);
             }
           }
-        `}</style>
+                `}</style>
+      </div>
       </div>
     </div>
   );

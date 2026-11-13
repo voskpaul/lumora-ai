@@ -32,21 +32,33 @@ export default async function VideoEditorPage({
     notFound();
   }
 
+ 
   return (
-    <div className="min-h-screen bg-[#0b0b0f] p-6 text-white">
-      <h1 className="mb-6 text-2xl font-bold">
-        {video.title}
-      </h1>
+    <div className="h-full min-h-0 overflow-hidden bg-[#0b0b0f] text-white">
+      <div className="flex h-full min-h-0 flex-col">
+        {/* Editor top bar */}
+        <header className="flex shrink-0 items-center justify-between border-b border-white/10 px-4 py-1.5">
+          <div className="min-w-0">
+            <h1 className="truncate text-lg font-semibold">
+              {video.title}
+            </h1>
+            <p className="text-xs text-white/40">
+              {video.status}
+            </p>
+          </div>
 
-      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-        <EditorClient
-  videoId={videoId}
-  videoUrl={video.videoUrl}
-/>
+          <span className="text-xs text-white/40">
+            Lumora AI Editor
+          </span>
+        </header>
 
-        <p className="mt-2 text-sm text-white/50">
-          {video.status}
-        </p>
+        {/* Editor workspace */}
+        <main className="flex min-h-0 flex-1 flex-col overflow-hidden p-3">
+          <EditorClient
+            videoId={videoId}
+            videoUrl={video.videoUrl}
+          />
+        </main>
       </div>
     </div>
   );

@@ -16,6 +16,34 @@ const getOwnedVideo = async (videoId: string, userId: string) => {
   });
 };
 
+const normalizeMusicUrl = (value: string): string | null => {
+  const url = value.trim();
+
+  if (/^https?:\/\//i.test(url)) {
+    try {
+      const parsed = new URL(url);
+      return parsed.protocol === "https:" || parsed.protocol === "http:"
+        ? url
+        : null;
+    } catch {
+      return null;
+    }
+  }
+
+  const path = `/${url.replace(/^\/+/, "")}`;
+
+  // Local audio may come from the public music library or generated narration.
+  if (
+    /^\/(?:music|voices)\/[a-z0-9_./() -]+\.mp3$/i.test(path)
+  ) {
+    if (path.split("/").some((part) => part === "." || part === "..")) {
+      return null;
+    }
+    return path;
+  }
+  return null;
+};
+
 export async function GET(
   _request: NextRequest,
   { params }: RouteContext
@@ -70,7 +98,9 @@ export async function POST(
     const body = await request.json();
 
     const audioUrl =
-      typeof body.audioUrl === "string" ? body.audioUrl.trim() : "";
+  typeof body.audioUrl === "string"
+    ? normalizeMusicUrl(body.audioUrl) ?? ""
+    : "";
     const duration = Number(body.duration);
 
     if (
@@ -194,7 +224,16 @@ export async function PATCH(
       if (typeof body.audioUrl !== "string" || !body.audioUrl.trim()) {
         return NextResponse.json({ error: "Invalid audioUrl" }, { status: 400 });
       }
-      data.audioUrl = body.audioUrl.trim();
+      const normalizedUrl = normalizeMusicUrl(body.audioUrl);
+
+if (!normalizedUrl) {
+  return NextResponse.json(
+    { error: "Use a valid HTTP(S) URL or a path under /music/ ending in .mp3" },
+    { status: 400 }
+  );
+}
+
+data.audioUrl = normalizedUrl;
     }
 
     for (const field of [

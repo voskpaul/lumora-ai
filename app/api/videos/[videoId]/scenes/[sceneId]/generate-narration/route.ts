@@ -90,6 +90,8 @@ export async function POST(
       },
     });
 
+    console.log("[NARRATION DEBUG] User found:", !!user);
+
     if (!user) {
       return NextResponse.json(
         {
@@ -124,6 +126,13 @@ export async function POST(
         },
       },
     });
+
+    console.log("[NARRATION DEBUG] Scene lookup:", {
+  videoId,
+  sceneId,
+  userId: user.id,
+  found: !!scene,
+});
 
     if (!scene) {
       return NextResponse.json(

@@ -628,59 +628,51 @@ await prisma.$transaction(
               motionOverride:
                 scene.motionOverride ?? null,
 
-              audioStartTime:
-                typeof scene.audioStartTime ===
-                  "number" &&
-                Number.isFinite(
-                  scene.audioStartTime
-                )
-                  ? Math.max(
-                      0,
-                      scene.audioStartTime
-                    )
-                  : null,
+              ...(scene.audioStartTime !== undefined
+  ? {
+      audioStartTime:
+        typeof scene.audioStartTime === "number" &&
+        Number.isFinite(scene.audioStartTime)
+          ? Math.max(0, scene.audioStartTime)
+          : null,
+    }
+  : {}),
 
-              audioTrimStart:
-                typeof scene.audioTrimStart ===
-                  "number" &&
-                Number.isFinite(
-                  scene.audioTrimStart
-                )
-                  ? Math.max(
-                      0,
-                      scene.audioTrimStart
-                    )
-                  : 0,
+...(scene.audioTrimStart !== undefined
+  ? {
+      audioTrimStart:
+        typeof scene.audioTrimStart === "number" &&
+        Number.isFinite(scene.audioTrimStart)
+          ? Math.max(0, scene.audioTrimStart)
+          : 0,
+    }
+  : {}),
 
-              audioTrimEnd:
-                typeof scene.audioTrimEnd ===
-                  "number" &&
-                Number.isFinite(
-                  scene.audioTrimEnd
-                )
-                  ? Math.max(
-                      0,
-                      scene.audioTrimEnd
-                    )
-                  : null,
+...(scene.audioTrimEnd !== undefined
+  ? {
+      audioTrimEnd:
+        typeof scene.audioTrimEnd === "number" &&
+        Number.isFinite(scene.audioTrimEnd)
+          ? Math.max(0, scene.audioTrimEnd)
+          : null,
+    }
+  : {}),
 
-              audioVolume:
-                typeof scene.audioVolume ===
-                  "number" &&
-                Number.isFinite(
-                  scene.audioVolume
-                )
-                  ? Math.min(
-                      1,
-                      Math.max(
-                        0,
-                        scene.audioVolume
-                      )
-                    )
-                  : 1,
+...(scene.audioVolume !== undefined
+  ? {
+      audioVolume:
+        typeof scene.audioVolume === "number" &&
+        Number.isFinite(scene.audioVolume)
+          ? Math.min(1, Math.max(0, scene.audioVolume))
+          : 1,
+    }
+  : {}),
 
-              audioMuted:
-                scene.audioMuted === true,
+...(scene.audioMuted !== undefined
+  ? {
+      audioMuted: scene.audioMuted === true,
+    }
+  : {}),
 
               videoId,
             },

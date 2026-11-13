@@ -145,69 +145,27 @@ export default function EditorClient({
     };
   }, []);
 
-  return (
-    <div className="space-y-4">
-      {/* =================================================
-          PLAYBACK BAR
-      ================================================= */}
-
-      <div className="flex items-center justify-between rounded-xl border border-white/10 bg-black/30 px-4 py-3">
-        <div className="flex items-center gap-2">
-          {/* RESTART */}
-
-          <button
-            type="button"
-            onClick={handleRestart}
-            disabled={!videoUrl}
-            className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/70 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-30"
-            title="Restart"
-          >
-            ↻
-          </button>
-
-          {/* PLAY / PAUSE */}
-
-          <button
-            type="button"
-            onClick={handleTogglePlay}
-            disabled={!videoUrl}
-            className="rounded-lg bg-cyan-500 px-4 py-2 text-sm font-medium text-black transition hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-30"
-          >
-            {isPlaying ? "⏸ Pause" : "▶ Play"}
-          </button>
-
-          <span className="ml-2 text-xs text-white/40">
-            Space = Play/Pause · Home = Restart
-          </span>
-        </div>
-
-        <div className="font-mono text-xs text-white/50">
-          {currentTime.toFixed(2)}s
-        </div>
-      </div>
-
-      {/* =================================================
-          VIDEO PREVIEW
-      ================================================= */}
-
-      <VideoPreview
-        videoUrl={videoUrl}
-        currentTime={currentTime}
-        onTimeUpdate={handleTimeUpdate}
-        onPlayingChange={handlePlayingChange}
-        seekRequest={seekRequestRef.current}
-      />
-
-      {/* =================================================
-          TIMELINE
-      ================================================= */}
-
+ return (
+  <div className="flex h-full min-h-0 flex-col overflow-hidden">
+    <div className="min-h-0 flex-1 overflow-hidden">
       <Timeline
         videoId={videoId}
         currentTime={currentTime}
         onSeek={handleSeek}
         isPlaying={isPlaying}
+        onTogglePlay={handleTogglePlay}
+        onRestart={handleRestart}
+        preview={
+          <VideoPreview
+            videoUrl={videoUrl}
+            currentTime={currentTime}
+            onTimeUpdate={handleTimeUpdate}
+            onPlayingChange={handlePlayingChange}
+            seekRequest={seekRequestRef.current}
+          />
+        }
       />
     </div>
-  );
+  </div>
+);
 }

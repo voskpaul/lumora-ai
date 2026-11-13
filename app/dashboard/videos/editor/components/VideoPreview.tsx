@@ -191,36 +191,33 @@ export default function VideoPreview({
   // =====================================================
 
   useEffect(() => {
-    const video = videoRef.current;
+  const video = videoRef.current;
 
-    if (!video) {
-      return;
-    }
+  if (!video) return;
 
-    video.pause();
-    video.currentTime = 0;
+  video.pause();
+  video.currentTime = 0;
+  lastSeekRequestRef.current = null;
 
-    lastSeekRequestRef.current =
-      null;
+  onTimeUpdate?.(0);
+  onPlayingChange?.(false);
 
-    onTimeUpdate?.(0);
-    onPlayingChange?.(false);
-  }, [
-    videoUrl,
-    onTimeUpdate,
-    onPlayingChange,
-  ]);
+// Reset only when the video source changes.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [videoUrl]);
 
   return (
-    <div className="overflow-hidden rounded-xl border border-white/10 bg-black">
+    <div className="flex h-full min-h-0 w-full items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-black">
       {videoUrl ? (
         <video
           ref={videoRef}
           src={videoUrl}
           controls
+          
           playsInline
           preload="metadata"
-          className="aspect-video w-full object-contain"
+          muted
+          className="block h-full w-full object-contain"
           onLoadedMetadata={(event) => {
             const video =
               event.currentTarget;
@@ -242,14 +239,15 @@ export default function VideoPreview({
               "================================="
             );
           }}
-          onPlay={() => {
+          onPlay={(event) => {
+            event.currentTarget.muted = true;
             onPlayingChange?.(true);
 
             console.log(
               "EDITOR PLAYBACK: PLAY"
             );
           }}
-          onPause={() => {
+          onPause={(event) => {
             onPlayingChange?.(false);
 
             console.log(
@@ -288,7 +286,7 @@ export default function VideoPreview({
           }}
         />
       ) : (
-        <div className="flex aspect-video items-center justify-center text-white/40">
+        <div className="flex h-full w-full items-center justify-center text-white/40">
           No rendered video yet
         </div>
       )}
