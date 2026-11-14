@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { stripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 
 const CREDIT_PACKS: Record<
   string,
@@ -82,7 +82,7 @@ export async function POST(
     }
 
     const checkoutSession =
-      await stripe.checkout.sessions.create(
+      await getStripe().checkout.sessions.create(
         {
           mode: "payment",
 

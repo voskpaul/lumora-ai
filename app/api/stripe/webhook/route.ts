@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
-import { stripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
@@ -18,6 +18,19 @@ export async function POST(req: Request) {
     return NextResponse.json(
       { error: "Missing signature" },
       { status: 400 }
+    );
+  }
+
+  let stripe: Stripe;
+
+  try {
+    stripe = getStripe();
+  } catch (error) {
+    console.error("Stripe configuration error:", error);
+
+    return NextResponse.json(
+      { error: "Stripe is not configured" },
+      { status: 503 }
     );
   }
 
