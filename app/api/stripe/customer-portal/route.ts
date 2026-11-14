@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { stripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 
 export async function POST() {
   try {
@@ -50,7 +50,7 @@ export async function POST() {
     }
 
     const portalSession =
-      await stripe.billingPortal.sessions.create({
+      await getStripe().billingPortal.sessions.create({
         customer: user.stripeCustomerId,
 
         return_url:
