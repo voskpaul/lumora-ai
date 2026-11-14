@@ -1,13 +1,22 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-  baseURL: process.env.OPENAI_BASE_URL,
-});
-
 export async function GET() {
   try {
+    const apiKey = process.env.OPENAI_API_KEY;
+
+    if (!apiKey) {
+      return NextResponse.json(
+        { error: "OpenAI is not configured" },
+        { status: 503 }
+      );
+    }
+
+    const openai = new OpenAI({
+      apiKey,
+      baseURL: process.env.OPENAI_BASE_URL,
+    });
+
     const response =
       await openai.chat.completions.create({
         model: "openai/gpt-oss-20b:free",
