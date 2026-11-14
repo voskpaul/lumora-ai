@@ -159,25 +159,6 @@ export async function POST(req: Request) {
       },
     });
 
-    console.log("");
-    console.log(
-      "================================"
-    );
-    console.log(
-      "VIDEO CREATED SUCCESSFULLY"
-    );
-    console.log(
-      "VIDEO ID:",
-      video.id
-    );
-    console.log(
-      "VIDEO TITLE:",
-      video.title
-    );
-    console.log(
-      "================================"
-    );
-
     // =====================================================
     // CREATE INITIAL TIMELINE SCENES
     // =====================================================
@@ -287,14 +268,9 @@ export async function POST(req: Request) {
       error
     );
 
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Failed to generate script";
-
     return NextResponse.json(
       {
-        error: message,
+        error: "Failed to generate script",
       },
       {
         status: 500,

@@ -86,6 +86,29 @@ export async function POST(req: Request) {
       );
     }
 
+    const existingScenes = await prisma.scene.findMany({
+      where: { videoId: video.id },
+      select: { id: true },
+    });
+
+    const foreignImage = await prisma.generatedImage.findFirst({
+      where: {
+        userId: { not: user.id },
+        OR: [
+          { videoId: video.id },
+          { sceneId: { in: existingScenes.map((scene: { id: string }) => scene.id) } },
+        ],
+      },
+      select: { id: true },
+    });
+
+    if (foreignImage) {
+      return NextResponse.json(
+        { error: "Video has protected linked resources" },
+        { status: 409 }
+      );
+    }
+
     // =====================================================
     // PRODUCTION SAFETY
     // =====================================================
@@ -135,6 +158,7 @@ export async function POST(req: Request) {
     await prisma.generatedImage.deleteMany({
       where: {
         videoId: video.id,
+        userId: user.id,
       },
     });
 
@@ -471,14 +495,9 @@ export async function POST(req: Request) {
       );
     }
 
-    const errorMessage =
-      error instanceof Error
-        ? error.message
-        : "Failed to generate images";
-
     return NextResponse.json(
       {
-        error: errorMessage,
+        error: "Failed to generate images",
       },
       {
         status: 500,

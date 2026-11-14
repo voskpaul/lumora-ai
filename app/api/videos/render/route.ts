@@ -6,9 +6,6 @@ import { prisma } from "@/lib/prisma";
 import path from "path";
 import fs from "fs";
 import type { Scene } from "@prisma/client";
-import { resolvePublicAudioPath } from "@/lib/renderer/v2/timeline-music";
-import type { MusicTrack } from "@prisma/client";
-
 import { renderV2 } from "@/lib/renderer/v2/render";
 
 type TransitionType = "fade" | "slide" | "zoom" | "none";
@@ -108,6 +105,9 @@ export async function POST(req: Request) {
 
       include: {
         generatedImages: {
+          where: {
+            userId: user.id,
+          },
           orderBy: {
             createdAt: "asc",
           },
@@ -512,10 +512,7 @@ export async function POST(req: Request) {
       video.scenes
         .slice(0, -1)
         .map(
-          (
-            scene: Scene,
-            _sceneIndex: number
-          ): TimelineTransition => {
+          (scene: Scene): TimelineTransition => {
             const rawType =
               scene.transitionType;
 
@@ -1009,14 +1006,9 @@ export async function POST(req: Request) {
     // ERROR RESPONSE
     // =====================================================
 
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Render failed";
-
     return NextResponse.json(
       {
-        error: message,
+        error: "Render failed",
       },
       {
         status: 500,

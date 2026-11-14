@@ -81,6 +81,29 @@ export async function DELETE(
       );
     }
 
+    const videoScenes = await prisma.scene.findMany({
+      where: { videoId },
+      select: { id: true },
+    });
+
+    const foreignImage = await prisma.generatedImage.findFirst({
+      where: {
+        userId: { not: user.id },
+        OR: [
+          { videoId },
+          { sceneId: { in: videoScenes.map((scene: { id: string }) => scene.id) } },
+        ],
+      },
+      select: { id: true },
+    });
+
+    if (foreignImage) {
+      return NextResponse.json(
+        { error: "Video has protected linked resources" },
+        { status: 409 }
+      );
+    }
+
     // =====================================================
     // DELETE RELATED SCENES
     // =====================================================

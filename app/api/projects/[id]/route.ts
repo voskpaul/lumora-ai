@@ -41,6 +41,36 @@ export async function DELETE(
       );
     }
 
+    const project = await prisma.project.findFirst({
+      where: {
+        id,
+        userId: user.id,
+      },
+      select: { id: true },
+    });
+
+    if (!project) {
+      return NextResponse.json(
+        { error: "Project not found" },
+        { status: 404 }
+      );
+    }
+
+    const linkedForeignVideo = await prisma.video.findFirst({
+      where: {
+        projectId: id,
+        userId: { not: user.id },
+      },
+      select: { id: true },
+    });
+
+    if (linkedForeignVideo) {
+      return NextResponse.json(
+        { error: "Project has protected linked resources" },
+        { status: 409 }
+      );
+    }
+
     const deleted = await prisma.project.deleteMany({
       where: {
         id,

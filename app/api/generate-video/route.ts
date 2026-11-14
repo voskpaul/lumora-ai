@@ -194,21 +194,6 @@ export async function POST(req: Request) {
  * Deduct credits
  */
 if (subscription) {
-  console.log(
-    "SUBSCRIPTION:",
-    subscription
-  );
-
-  console.log(
-    "Deducting credits from user:",
-    user.id
-  );
-
-  console.log(
-    "Credits before deduction:",
-    subscription.credits
-  );
-
   await prisma.subscription.update({
     where: {
       userId: user.id,

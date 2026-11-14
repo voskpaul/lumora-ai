@@ -25,7 +25,6 @@ export async function POST() {
       },
     });
 
-    console.log("USER:", user);
 
     if (!user) {
       return NextResponse.json(
@@ -57,10 +56,6 @@ export async function POST() {
           `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/billing`,
       });
 
-    console.log(
-      "Portal URL:",
-      portalSession.url
-    );
 
     return NextResponse.json({
       url: portalSession.url,

@@ -300,10 +300,7 @@ export async function POST(
 
     return NextResponse.json(
       {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to generate scene narration",
+        error: "Failed to generate scene narration",
       },
       {
         status: 500,

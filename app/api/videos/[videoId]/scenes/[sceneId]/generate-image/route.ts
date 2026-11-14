@@ -296,10 +296,7 @@ export async function POST(
 
     return NextResponse.json(
       {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to generate scene image",
+        error: "Failed to generate scene image",
       },
       {
         status: 500,
