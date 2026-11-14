@@ -1,19 +1,39 @@
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import type { Video } from "@prisma/client";
+import { notFound, redirect } from "next/navigation";
 
 export default async function ProjectPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { id } = await params;
+  const session = await auth();
 
-  const project = await prisma.project.findUnique({
+  if (!session?.user?.email) {
+    redirect("/login");
+  }
+
+  const { id } = await params;
+  const user = await prisma.user.findUnique({
+    where: { email: session.user.email },
+    select: { id: true },
+  });
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const project = await prisma.project.findFirst({
     where: {
       id,
+      userId: user.id,
     },
     include: {
       videos: {
+        where: {
+          userId: user.id,
+        },
         orderBy: {
           createdAt: "desc",
         },
@@ -22,11 +42,7 @@ export default async function ProjectPage({
   });
 
   if (!project) {
-    return (
-      <div className="p-8 text-white">
-        Project not found
-      </div>
-    );
+    notFound();
   }
 
   return (

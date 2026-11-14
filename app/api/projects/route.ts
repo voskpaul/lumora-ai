@@ -44,7 +44,50 @@ export async function POST(req: Request) {
       );
     }
 
-    const { title, description } = await req.json();
+    const body = await req.json().catch(() => null);
+
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
+      return NextResponse.json(
+        { error: "Invalid project data" },
+        { status: 400 }
+      );
+    }
+
+    const title =
+      typeof body.title === "string"
+        ? body.title.trim()
+        : "";
+    const rawDescription = body.description;
+
+    if (!title || title.length > 120) {
+      return NextResponse.json(
+        { error: "Project title must be between 1 and 120 characters" },
+        { status: 400 }
+      );
+    }
+
+    if (
+      rawDescription !== undefined &&
+      rawDescription !== null &&
+      typeof rawDescription !== "string"
+    ) {
+      return NextResponse.json(
+        { error: "Invalid project description" },
+        { status: 400 }
+      );
+    }
+
+    const description =
+      typeof rawDescription === "string"
+        ? rawDescription.trim()
+        : null;
+
+    if (description && description.length > 2000) {
+      return NextResponse.json(
+        { error: "Project description is too long" },
+        { status: 400 }
+      );
+    }
 
     const user = await prisma.user.findUnique({
       where: {
