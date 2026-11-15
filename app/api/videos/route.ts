@@ -53,11 +53,32 @@ export async function POST(
       );
     }
 
-    const {
-      title,
-      prompt,
-      script,
-    } = await req.json();
+    const body = await req.json().catch(() => null);
+
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
+      return NextResponse.json(
+        { error: "Invalid video data" },
+        { status: 400 }
+      );
+    }
+
+    const title = typeof body.title === "string" ? body.title.trim() : "";
+    const prompt = typeof body.prompt === "string" ? body.prompt.trim() : "";
+    const script =
+      typeof body.script === "string" ? body.script : null;
+
+    if (
+      !title ||
+      title.length > 120 ||
+      !prompt ||
+      prompt.length > 2000 ||
+      (body.script !== undefined && body.script !== null && typeof body.script !== "string")
+    ) {
+      return NextResponse.json(
+        { error: "Invalid video data" },
+        { status: 400 }
+      );
+    }
 
     const user =
       await prisma.user.findUnique({

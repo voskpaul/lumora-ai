@@ -65,11 +65,6 @@ export async function POST(req: Request) {
         const session =
           event.data.object as Stripe.Checkout.Session;
 
-        console.log(
-          "SESSION METADATA:",
-          session.metadata
-        );
-
         const userId =
           session.metadata?.userId;
 
@@ -114,10 +109,6 @@ export async function POST(req: Request) {
     credits,
   },
 });
-
-          console.log(
-            `Added ${credits} credits to ${userId}`
-          );
 
           break;
         }
@@ -204,17 +195,6 @@ await prisma.user.update({
   },
 });
 
-console.log(
-  "Saved Stripe IDs:",
-  {
-    stripeCustomerId,
-    stripeSubscriptionId,
-  }
-);
-
-        console.log(
-          `Subscription updated for ${userId}: ${plan}`
-        );
 
         break;
       }

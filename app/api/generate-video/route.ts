@@ -14,15 +14,43 @@ export async function POST(req: Request) {
       );
     }
 
-    const { prompt, projectId } =
-      await req.json();
+    const body = await req.json().catch(() => null);
 
-    if (!prompt?.trim()) {
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
       return NextResponse.json(
-        { error: "Prompt required" },
+        { error: "Invalid video data" },
         { status: 400 }
       );
     }
+
+    const prompt =
+      typeof body.prompt === "string"
+        ? body.prompt.trim()
+        : "";
+    const projectId = body.projectId;
+
+    if (!prompt || prompt.length > 2000) {
+      return NextResponse.json(
+        { error: "Prompt must be between 1 and 2,000 characters" },
+        { status: 400 }
+      );
+    }
+
+    if (
+      projectId !== undefined &&
+      projectId !== null &&
+      typeof projectId !== "string"
+    ) {
+      return NextResponse.json(
+        { error: "Invalid project ID" },
+        { status: 400 }
+      );
+    }
+
+    const normalizedProjectId =
+      typeof projectId === "string" && projectId.trim()
+        ? projectId.trim()
+        : null;
 
     const user = await prisma.user.findUnique({
       where: {
@@ -38,6 +66,23 @@ export async function POST(req: Request) {
         { error: "User not found" },
         { status: 404 }
       );
+    }
+
+    if (normalizedProjectId) {
+      const project = await prisma.project.findFirst({
+        where: {
+          id: normalizedProjectId,
+          userId: user.id,
+        },
+        select: { id: true },
+      });
+
+      if (!project) {
+        return NextResponse.json(
+          { error: "Project not found" },
+          { status: 404 }
+        );
+      }
     }
 
     /*
@@ -141,9 +186,7 @@ export async function POST(req: Request) {
 
           userId: user.id,
 
-          projectId:
-            projectId ||
-            null,
+          projectId: normalizedProjectId,
         },
       });
 
@@ -151,21 +194,6 @@ export async function POST(req: Request) {
  * Deduct credits
  */
 if (subscription) {
-  console.log(
-    "SUBSCRIPTION:",
-    subscription
-  );
-
-  console.log(
-    "Deducting credits from user:",
-    user.id
-  );
-
-  console.log(
-    "Credits before deduction:",
-    subscription.credits
-  );
-
   await prisma.subscription.update({
     where: {
       userId: user.id,

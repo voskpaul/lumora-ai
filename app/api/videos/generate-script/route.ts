@@ -22,20 +22,77 @@ export async function POST(req: Request) {
     // REQUEST BODY
     // =====================================================
 
-    const {
-      prompt,
-      category,
-      projectId,
-      format,
-      voiceType,
-    } = await req.json();
+    const body = await req.json().catch(() => null);
 
-    if (!prompt?.trim()) {
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
       return NextResponse.json(
-        { error: "Prompt is required" },
+        { error: "Invalid video data" },
         { status: 400 }
       );
     }
+
+    const prompt =
+      typeof body.prompt === "string"
+        ? body.prompt.trim()
+        : "";
+    const category = body.category;
+    const projectId = body.projectId;
+    const format = body.format;
+    const voiceType = body.voiceType;
+
+    if (!prompt || prompt.length > 2000) {
+      return NextResponse.json(
+        { error: "Prompt must be between 1 and 2,000 characters" },
+        { status: 400 }
+      );
+    }
+
+    if (
+      category !== undefined &&
+      (typeof category !== "string" || category.length > 100)
+    ) {
+      return NextResponse.json(
+        { error: "Invalid category" },
+        { status: 400 }
+      );
+    }
+
+    if (
+      format !== undefined &&
+      format !== "shorts" &&
+      format !== "youtube"
+    ) {
+      return NextResponse.json(
+        { error: "Invalid video format" },
+        { status: 400 }
+      );
+    }
+
+    if (
+      voiceType !== undefined &&
+      (typeof voiceType !== "string" || voiceType.length > 100)
+    ) {
+      return NextResponse.json(
+        { error: "Invalid voice type" },
+        { status: 400 }
+      );
+    }
+
+    if (
+      projectId !== undefined &&
+      projectId !== null &&
+      typeof projectId !== "string"
+    ) {
+      return NextResponse.json(
+        { error: "Invalid project ID" },
+        { status: 400 }
+      );
+    }
+
+    const normalizedProjectId =
+      typeof projectId === "string" && projectId.trim()
+        ? projectId.trim()
+        : null;
 
     // =====================================================
     // GET USER
@@ -56,6 +113,23 @@ export async function POST(req: Request) {
         { error: "User not found" },
         { status: 404 }
       );
+    }
+
+    if (normalizedProjectId) {
+      const project = await prisma.project.findFirst({
+        where: {
+          id: normalizedProjectId,
+          userId: user.id,
+        },
+        select: { id: true },
+      });
+
+      if (!project) {
+        return NextResponse.json(
+          { error: "Project not found" },
+          { status: 404 }
+        );
+      }
     }
 
     // =====================================================
@@ -81,28 +155,9 @@ export async function POST(req: Request) {
         voiceType:
           voiceType || "en-US-AriaNeural",
         userId: user.id,
-        projectId: projectId || null,
+        projectId: normalizedProjectId,
       },
     });
-
-    console.log("");
-    console.log(
-      "================================"
-    );
-    console.log(
-      "VIDEO CREATED SUCCESSFULLY"
-    );
-    console.log(
-      "VIDEO ID:",
-      video.id
-    );
-    console.log(
-      "VIDEO TITLE:",
-      video.title
-    );
-    console.log(
-      "================================"
-    );
 
     // =====================================================
     // CREATE INITIAL TIMELINE SCENES
@@ -213,14 +268,9 @@ export async function POST(req: Request) {
       error
     );
 
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Failed to generate script";
-
     return NextResponse.json(
       {
-        error: message,
+        error: "Failed to generate script",
       },
       {
         status: 500,

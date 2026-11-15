@@ -13,16 +13,31 @@ export async function POST(req: Request) {
       );
     }
 
-    const { prompt } = await req.json();
+    const body = await req.json().catch(() => null);
 
-    if (!prompt?.trim()) {
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
       return NextResponse.json(
-        {
-          error: "Prompt is required",
-        },
-        {
-          status: 400,
-        }
+        { error: "Invalid image request" },
+        { status: 400 }
+      );
+    }
+
+    const prompt =
+      typeof body.prompt === "string"
+        ? body.prompt.trim()
+        : "";
+
+    if (!prompt) {
+      return NextResponse.json(
+        { error: "Prompt is required" },
+        { status: 400 }
+      );
+    }
+
+    if (prompt.length > 2000) {
+      return NextResponse.json(
+        { error: "Prompt must be 2,000 characters or fewer" },
+        { status: 400 }
       );
     }
 
@@ -62,21 +77,15 @@ export async function POST(req: Request) {
       success: true,
       image,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error(
       "Image generation error:",
       error
     );
 
     return NextResponse.json(
-      {
-        error:
-          error?.message ||
-          "Image generation failed",
-      },
-      {
-        status: 500,
-      }
+      { error: "Image generation failed" },
+      { status: 500 }
     );
   }
 }

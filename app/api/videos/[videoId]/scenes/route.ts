@@ -97,6 +97,7 @@ export async function GET(
       },
       select: {
         id: true,
+        userId: true,
       },
     });
 
@@ -133,6 +134,7 @@ export async function GET(
       await prisma.generatedImage.findMany({
         where: {
           videoId,
+          userId: video.userId,
           sceneId: {
             not: null,
           },
@@ -306,6 +308,7 @@ export async function PUT(
       },
       select: {
         id: true,
+        userId: true,
       },
     });
 
@@ -397,6 +400,24 @@ export async function PUT(
           id: true,
         },
       });
+
+    const foreignImage = await prisma.generatedImage.findFirst({
+      where: {
+        userId: { not: video.userId },
+        OR: [
+          { videoId },
+          { sceneId: { in: existingScenes.map((scene: { id: string }) => scene.id) } },
+        ],
+      },
+      select: { id: true },
+    });
+
+    if (foreignImage) {
+      return NextResponse.json(
+        { error: "Video has protected linked resources" },
+        { status: 409 }
+      );
+    }
 
     const existingSceneIds =
       new Set<string>(
@@ -719,6 +740,7 @@ await prisma.$transaction(
         await tx.generatedImage.findMany({
           where: {
             videoId,
+            userId: video.userId,
             sceneId: sourceSceneId,
           },
         });
@@ -774,6 +796,7 @@ await prisma.$transaction(
       await tx.generatedImage.deleteMany({
         where: {
           videoId,
+          userId: video.userId,
           sceneId: {
             in: sceneIdsToDelete,
           },
@@ -836,6 +859,7 @@ await prisma.$transaction(
       await prisma.generatedImage.findMany({
         where: {
           videoId,
+          userId: video.userId,
           sceneId: {
             not: null,
           },

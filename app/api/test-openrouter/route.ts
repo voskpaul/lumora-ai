@@ -1,7 +1,14 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
+import { authorizeDevelopmentDiagnostic } from "@/lib/diagnostics";
 
 export async function GET() {
+  const accessResponse = await authorizeDevelopmentDiagnostic();
+
+  if (accessResponse) {
+    return accessResponse;
+  }
+
   try {
     const apiKey = process.env.OPENAI_API_KEY;
 
@@ -33,19 +40,12 @@ export async function GET() {
       });
 
     return NextResponse.json(completion);
-  } catch (err: unknown) {
-    console.error(err);
+  } catch (error) {
+    console.error("OpenRouter diagnostic failed:", error);
 
     return NextResponse.json(
-      {
-        error:
-          err instanceof Error
-            ? err.message
-            : "OpenRouter request failed",
-      },
-      {
-        status: 500,
-      }
+      { error: "OpenRouter diagnostic failed" },
+      { status: 500 }
     );
   }
 }

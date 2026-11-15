@@ -223,10 +223,10 @@ try {
       note: "Captions generated successfully",
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Generate captions error:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to generate captions" },
+      { error: "Failed to generate captions" },
       { status: 500 }
     );
   }

@@ -89,6 +89,7 @@ export async function POST(request: Request) {
       await prisma.generatedImage.count({
         where: {
           videoId: video.id,
+          userId: user.id,
         },
       });
 
@@ -243,19 +244,8 @@ export async function POST(request: Request) {
       voiceUrl,
       status: updatedVideo.status,
     });
-  } catch (error: any) {
-    console.error("================================");
-    console.error(
-      "Voice generation error:",
-      error
-    );
-    console.error(
-      error?.message
-    );
-    console.error(
-      error?.stack
-    );
-    console.error("================================");
+  } catch (error: unknown) {
+    console.error("Voice generation error:", error);
 
     // =====================================================
     // MARK VOICE GENERATION AS FAILED
@@ -295,9 +285,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       {
-        error:
-          error?.message ||
-          "Failed to generate voice",
+        error: "Failed to generate voice",
       },
       {
         status: 500,
